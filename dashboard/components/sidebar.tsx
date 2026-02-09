@@ -11,6 +11,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Play,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/incidents", label: "Incidents", icon: AlertTriangle },
   { href: "/agents", label: "Agents", icon: Bot },
+  { href: "/simulate", label: "Simulate", icon: Play },
   { href: "/metrics", label: "Metrics", icon: BarChart3 },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
