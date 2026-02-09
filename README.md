@@ -1,20 +1,8 @@
-```
-   _____ _     _      _     _  ___
-  / ____| |   (_)    | |   | |/ _ \
- | (___ | |__  _  ___| | __| | | | |_ __  ___
-  \___ \| '_ \| |/ _ \ |/ _` | | | | '_ \/ __|
-  ____) | | | | |  __/ | (_| | |_| | |_) \__ \
- |_____/|_| |_|_|\___|_|\__,_|\___/| .__/|___/
-                                    | |
-                                    |_|
-```
+# ShieldOps
 
-# ShieldOps - AI Security Operations Center
+**Autonomous AI Security Operations Center** — detect, investigate, and respond to security incidents with a multi-agent pipeline orchestrated through [Archestra](https://archestra.ai).
 
-> **5 AI agents. 3 MCP servers. 1 autonomous SOC.**
-> Built on [Archestra](https://archestra.ai) for the 2 Fast 2 MCP Hackathon.
-
-ShieldOps is an AI-powered Security Operations Center that automatically triages, investigates, and responds to security incidents using a team of specialized AI agents orchestrated through Archestra's MCP platform.
+5 specialized agents. 3 MCP tool servers. Full-stack observability.
 
 ---
 
@@ -52,61 +40,59 @@ ShieldOps is an AI-powered Security Operations Center that automatically triages
 
     ┌────────────────────────────────────────────────────────────────────────────┐
     │                          AI Agent Pipeline                                │
-    │                                                                            │
-    │  Alert ──► Sentinel ──► Sherlock ──► Responder ──► Chronicler              │
-    │            (Triage)     (Investigate)  (Contain)    (Report)                │
-    │            GPT-4o-mini  Claude Sonnet  GPT-4o       Gemini Flash            │
-    │            $0.001/call  $0.05/call     $0.03/call   $0.001/call             │
-    │                                                                            │
-    │                         Overseer (Orchestrator)                             │
-    │                         Claude Sonnet - $0.05/call                          │
+    │                                                                           │
+    │  Alert ──► Sentinel ──► Sherlock ──► Responder ──► Chronicler             │
+    │            (Triage)     (Investigate)  (Contain)    (Report)               │
+    │            GPT-4o-mini  Claude Sonnet  GPT-4o       Gemini Flash           │
+    │                                                                           │
+    │                         Overseer (Orchestrator)                            │
+    │                         Claude Sonnet                                      │
     └────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Quick Start
+## Getting Started
 
 ### Prerequisites
+
 - Docker & Docker Compose
 - Node.js 18+
-- API keys: OpenAI, Anthropic, Google AI (for LLM agents)
-- Optional: VirusTotal, AbuseIPDB (for threat intel enrichment)
+- API keys for OpenAI, Anthropic, and Google AI
 
-### 1. Clone & Configure
+### Setup
 
 ```bash
-git clone https://github.com/yourusername/shieldops.git
+git clone https://github.com/SaaiAravindhRaja/shieldops.git
 cd shieldops
 cp .env.example .env
-# Edit .env with your API keys
+# add your API keys to .env
 ```
 
-### 2. Start Infrastructure
+### Start the stack
 
 ```bash
 docker compose up -d
 ```
 
-This starts:
-| Service | Port | Description |
-|---------|------|-------------|
-| Archestra UI | [localhost:3000](http://localhost:3000) | MCP platform admin |
-| Archestra API | [localhost:9000](http://localhost:9000) | Platform API |
-| PostgreSQL | localhost:5432 | Incident database |
-| Prometheus | [localhost:9090](http://localhost:9090) | Metrics collection |
-| Grafana | [localhost:3002](http://localhost:3002) | Metrics dashboards |
+| Service | Port | |
+|---------|------|-|
+| Archestra UI | `localhost:3000` | Platform admin |
+| Archestra API | `localhost:9000` | REST API |
+| PostgreSQL | `localhost:5432` | Incident store |
+| Prometheus | `localhost:9090` | Metrics |
+| Grafana | `localhost:3002` | Dashboards |
 
-### 3. Start Dashboard
+### Start the dashboard
 
 ```bash
 cd dashboard
 npm install
 npm run dev
-# Opens at http://localhost:3001
+# http://localhost:3001
 ```
 
-### 4. Seed Demo Data (Optional)
+### Seed sample data
 
 ```bash
 npx tsx scripts/seed-data.ts
@@ -114,112 +100,74 @@ npx tsx scripts/seed-data.ts
 
 ---
 
-## Agent Pipeline
+## Agents
 
-ShieldOps uses a 5-agent pipeline where each agent specializes in one phase of incident response:
+Each agent handles one phase of the incident response lifecycle. Different models are assigned based on task complexity and cost.
 
-### Sentinel - Alert Triage
-- **Model:** GPT-4o-mini (OpenAI) - $0.001/call
-- **Role:** First responder. Classifies incoming alerts by severity (P1-P4) and routes to specialists.
-- **Tools:** `create_incident`, `list_incidents`, `get_incident_stats`
-- **Why this model:** Fast and cheap for high-volume triage. Processes 47+ alerts/day.
+| Agent | Role | Model | Tools |
+|-------|------|-------|-------|
+| **Sentinel** | Triage incoming alerts, classify severity | GPT-4o-mini | `create_incident`, `list_incidents`, `get_incident_stats` |
+| **Sherlock** | Deep investigation, threat correlation | Claude Sonnet | `check_ip`, `check_hash`, `check_domain`, `check_cve`, `bulk_check_ips`, `get_incident`, `add_evidence`, `update_incident` |
+| **Responder** | Containment and remediation actions | GPT-4o | `block_ip`, `isolate_pod`, `revoke_token`, `quarantine_user`, `execute_playbook`, `get_action_log`, `update_incident`, `add_evidence` |
+| **Chronicler** | Post-incident reporting, compliance checks | Gemini Flash | `get_incident`, `update_incident`, `add_evidence`, `get_incident_stats` |
+| **Overseer** | Pipeline orchestration, escalation review | Claude Sonnet | All tools (cross-server access) |
 
-### Sherlock - Deep Investigation
-- **Model:** Claude Sonnet (Anthropic) - $0.05/call
-- **Role:** Forensic investigator. Analyzes threats, correlates evidence, identifies attack patterns.
-- **Tools:** `check_ip`, `check_hash`, `check_domain`, `check_cve`, `bulk_check_ips`, `get_incident`, `add_evidence`, `update_incident`
-- **Why this model:** Superior reasoning for complex investigation chains.
-- **Security:** Uses Archestra's **Dual LLM Security Engine** to quarantine untrusted data (phishing payloads, prompt injections) before analysis.
-
-### Responder - Containment & Remediation
-- **Model:** GPT-4o (OpenAI) - $0.03/call
-- **Role:** Executes containment actions. Blocks IPs, isolates pods, revokes credentials.
-- **Tools:** `block_ip`, `isolate_pod`, `revoke_token`, `quarantine_user`, `execute_playbook`, `get_action_log`, `update_incident`, `add_evidence`
-- **Why this model:** Reliable tool execution with structured output.
-
-### Chronicler - Compliance & Reporting
-- **Model:** Gemini Flash (Google) - $0.001/call
-- **Role:** Generates post-incident reports, checks regulatory obligations (GDPR, SOC 2).
-- **Tools:** `get_incident`, `update_incident`, `add_evidence`, `get_incident_stats`
-- **Why this model:** Fast and cost-effective for document generation.
-
-### Overseer - Orchestrator
-- **Model:** Claude Sonnet (Anthropic) - $0.05/call
-- **Role:** Manages the entire pipeline. Approves high-risk actions, manages budgets, handles escalation.
-- **Tools:** All critical tools across all MCP servers.
-- **Why this model:** Best judgment for high-stakes decisions.
+Archestra's **Dual LLM Security Engine** quarantines untrusted data (phishing payloads, prompt injections in alert content) before agents process it. **Tool Policies** restrict which agents can call which tools — Sentinel can only triage, Responder can only contain.
 
 ---
 
 ## MCP Servers
 
-Three custom MCP servers built with `@modelcontextprotocol/sdk`:
+| Server | Tools | Purpose |
+|--------|-------|---------|
+| `incident-db` | 6 | Incident CRUD, evidence management, statistics — backed by PostgreSQL |
+| `threat-intel` | 5 | IP reputation, file hash analysis, domain lookups, CVE checks |
+| `security-playbook` | 6 | Automated response: block, isolate, revoke, quarantine, playbook execution |
 
-| Server | Tools | Description |
-|--------|-------|-------------|
-| **incident-db** | 6 | CRUD operations for incidents, evidence, and statistics via PostgreSQL |
-| **threat-intel** | 5 | IP reputation (AbuseIPDB), hash analysis (VirusTotal), domain/CVE checks |
-| **security-playbook** | 6 | Automated response actions: block, isolate, revoke, quarantine, playbooks |
-
-All servers use the **stdio transport** and are registered in Archestra's **MCP Registry** with per-agent **Tool Policies** controlling access.
+All servers use stdio transport and are registered in Archestra's MCP Registry with per-agent access controls.
 
 ---
 
-## Archestra Features Used
+## Archestra Platform Integration
 
-ShieldOps leverages every major Archestra platform feature:
-
-- [x] **MCP Registry** - 3 custom MCP servers registered as private tools
-- [x] **Dual LLM Security Engine** - Quarantine untrusted data with numeric-only LLM responses to prevent prompt injection
-- [x] **Tool Policies** - Per-agent tool access controls (Sentinel can only triage, Responder can only contain)
-- [x] **Cost & Limits** - Per-agent daily budgets ($0.50-$30/day) enforced at platform level
-- [x] **LLM Proxies** - Multi-model routing across OpenAI, Anthropic, and Google AI
-- [x] **Observability** - Prometheus metrics + OpenTelemetry traces for all agent actions
-- [x] **Terraform IaC** - Full infrastructure defined as code (`terraform/`)
-- [x] **Teams & RBAC** - SOC team with role-based access controls
+| Feature | How it's used |
+|---------|---------------|
+| MCP Registry | 3 custom servers registered as private tools |
+| Dual LLM Security | Quarantine untrusted alert data before agent processing |
+| Tool Policies | Per-agent tool access — least-privilege enforcement |
+| Cost & Limits | Daily budgets per agent ($0.50–$30/day) |
+| LLM Proxies | Multi-provider routing (OpenAI, Anthropic, Google AI) |
+| Observability | Prometheus metrics + OpenTelemetry traces |
+| Terraform IaC | Full config in `terraform/` |
+| Teams & RBAC | SOC team with role-based access |
 
 ---
 
-## Cost Optimization
+## Cost Model
 
-ShieldOps achieves **96% cost reduction** vs. using a single premium model for everything:
+Dynamic model selection reduces cost by ~96% compared to using a single premium model:
 
-| Task | Model | Cost/Call | Volume | Rationale |
-|------|-------|-----------|--------|-----------|
-| P4 Triage | GPT-4o-mini | $0.001 | High | Simple classification |
-| P3 Analysis | GPT-4o | $0.03 | Medium | Structured responses |
-| P1 Forensics | Claude Sonnet | $0.05 | Low | Deep reasoning |
-| Reporting | Gemini Flash | $0.001 | Medium | Document generation |
-| Orchestration | Claude Sonnet | $0.05 | Low | Critical decisions |
+| Task tier | Model | Cost/call | Rationale |
+|-----------|-------|-----------|-----------|
+| P4 triage | GPT-4o-mini | $0.001 | Simple classification |
+| P3 analysis | GPT-4o | $0.03 | Structured tool use |
+| P1 forensics | Claude Sonnet | $0.05 | Complex reasoning chains |
+| Reporting | Gemini Flash | $0.001 | Document generation |
+| Orchestration | Claude Sonnet | $0.05 | High-stakes decisions |
 
-**Single-model approach:** ~$320/day (GPT-4o for everything)
-**ShieldOps dynamic switching:** ~$12/day (right model for each task)
+Single-model baseline: ~$320/day. ShieldOps with dynamic switching: ~$12/day.
 
 ---
 
 ## Dashboard
 
-The ShieldOps dashboard is a Next.js application providing real-time visibility into the SOC:
+Next.js 16 app with real-time SOC visibility:
 
-- **SOC Overview** - Active incidents, agent status, MTTR trends, cost tracking
-- **Incidents** - Filterable list with severity/status badges, drill-down to timeline & evidence
-- **Agents** - Real-time monitoring of 5 AI agents with cost gauges and activity logs
-- **Metrics** - Cost breakdown, detection rates, MTTR trends, model cost comparison
-- **Settings** - Archestra connection config, feature status, quick links
-
----
-
-## Tech Stack
-
-| Component | Technology |
-|-----------|-----------|
-| Platform | [Archestra](https://archestra.ai) v1.0.39 |
-| Dashboard | Next.js 16 + Tailwind CSS v4 + Recharts |
-| MCP Servers | TypeScript + @modelcontextprotocol/sdk |
-| Database | PostgreSQL 16 |
-| Infrastructure | Docker Compose + Terraform |
-| Monitoring | Prometheus + Grafana + OpenTelemetry |
-| LLM Providers | OpenAI, Anthropic, Google AI |
+- **Overview** — KPIs, severity breakdown, incident feed, agent status
+- **Incidents** — Filterable table, drill-down to investigation timeline and evidence
+- **Agents** — Live monitoring with cost gauges, tool usage, activity logs
+- **Metrics** — Cost trends, MTTR, detection rates, model cost comparison
+- **Settings** — Connection status, platform feature overview
 
 ---
 
@@ -227,45 +175,43 @@ The ShieldOps dashboard is a Next.js application providing real-time visibility 
 
 ```
 shieldops/
-├── dashboard/          # Next.js SOC dashboard (port 3001)
-│   ├── app/            # Pages: overview, incidents, agents, metrics, settings
-│   └── lib/            # Utils, types, mock data
-├── mcp-servers/        # Custom MCP servers
-│   ├── incident-db/    # 6 tools - Incident CRUD via PostgreSQL
-│   ├── threat-intel/   # 5 tools - IP/hash/domain/CVE lookups
-│   └── security-playbook/ # 6 tools - Response actions
-├── terraform/          # Archestra IaC configuration
-│   ├── main.tf         # Provider config
-│   ├── agents.tf       # 5 agent definitions
-│   ├── mcp-servers.tf  # MCP server registration
-│   └── prompts/        # Agent system prompts
-├── grafana/            # Grafana dashboards & provisioning
-├── scripts/            # DB init & seed data
-├── docker-compose.yml  # Full stack orchestration
-├── prometheus.yml      # Metrics scraping config
-└── .env.example        # Environment variable template
+├── dashboard/             # Next.js 16 + Tailwind v4 + Recharts
+│   ├── app/               # Pages: overview, incidents, agents, metrics, settings
+│   ├── components/        # Sidebar, command bar
+│   └── lib/               # Types, utils, mock data
+├── mcp-servers/
+│   ├── incident-db/       # 6 tools — incident CRUD
+│   ├── threat-intel/      # 5 tools — threat lookups
+│   └── security-playbook/ # 6 tools — response actions
+├── terraform/             # Archestra IaC
+│   ├── agents.tf          # 5 agent definitions
+│   ├── mcp-servers.tf     # Server registration
+│   └── prompts/           # Agent system prompts
+├── grafana/               # Dashboard provisioning
+├── scripts/               # DB schema + seed data
+├── docker-compose.yml
+└── prometheus.yml
 ```
 
 ---
 
-## Archestra Configuration Guide
+## Configuring Archestra
 
-After `docker compose up -d`, configure Archestra at [localhost:3000](http://localhost:3000):
+After starting the stack, open `localhost:3000`:
 
-1. **Settings > LLM API Keys** - Add your OpenAI, Anthropic, and Google AI API keys
-2. **Settings > Security Engine** - Enable Dual LLM to protect against prompt injection
-3. **MCP Registry** - Register the 3 MCP servers (incident-db, threat-intel, security-playbook)
-4. **Agents** - Create 5 agents with their assigned models and system prompts
-5. **Tool Policies** - Configure per-agent tool access controls
-6. **Cost & Limits** - Set daily budgets per agent
-7. **Teams** - Create "SOC Team" and assign roles
+1. **LLM API Keys** — Add OpenAI, Anthropic, and Google AI keys
+2. **Security Engine** — Enable Dual LLM for prompt injection protection
+3. **MCP Registry** — Register the 3 tool servers
+4. **Agents** — Create the 5 agents with their system prompts
+5. **Tool Policies** — Assign per-agent tool access
+6. **Cost & Limits** — Set daily budgets
+7. **Teams** — Create SOC team and assign roles
 
-Or use Terraform:
+Or apply everything at once with Terraform:
+
 ```bash
 cd terraform
-terraform init
-terraform plan
-terraform apply
+terraform init && terraform apply
 ```
 
 ---
@@ -273,7 +219,3 @@ terraform apply
 ## License
 
 MIT
-
----
-
-Built with Archestra for the [2 Fast 2 MCP Hackathon](https://wemakedevs.org) by WeMakeDevs.
