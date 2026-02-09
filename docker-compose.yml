@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+  # Archestra Platform
+  archestra:
+    image: archestra/platform:latest
+    ports:
+      - "9000:9000"  # API
+      - "3000:3000"  # Admin UI
+    environment:
+      - ARCHESTRA_QUICKSTART=true
+      - ARCHESTRA_DATABASE_URL=postgresql://archestra:archestra@postgres:5432/archestra
+      - ARCHESTRA_OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318/v1/traces
+      - ARCHESTRA_LOGGING_LEVEL=info
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - archestra-app-data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=archestra
+      - POSTGRES_PASSWORD=archestra
+      - POSTGRES_DB=archestra
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U archestra"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=shieldops
+      - GF_SECURITY_ADMIN_USER=admin
+    volumes:
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # Incident DB MCP Server
+  incident-db-mcp:
+    build: ./mcp-servers/incident-db
+    environment:
+      - DATABASE_URL=postgresql://archestra:archestra@postgres:5432/archestra
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Threat Intel MCP Server
+  threat-intel-mcp:
+    build: ./mcp-servers/threat-intel
+    env_file: .env
+    restart: unless-stopped
+
+  # Security Playbook MCP Server
+  security-playbook-mcp:
+    build: ./mcp-servers/security-playbook
+    env_file: .env
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  archestra-app-data:
+  prometheus-data:
+  grafana-data:
