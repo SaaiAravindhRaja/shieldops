@@ -171,11 +171,11 @@ export default function MetricsPage() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Model Cost Comparison" delay={8}>
+        <ChartCard title="Cost: Commercial vs ShieldOps" delay={8}>
           <div className="space-y-4 pt-2">
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs" style={{ color: "#5c5c58" }}>Single Model (GPT-4o for all)</span>
+                <span className="text-xs" style={{ color: "#5c5c58" }}>Commercial SOC (GPT-4o + Claude)</span>
                 <span className="text-xs font-mono" style={{ color: "#5c5c58" }}>$320/day</span>
               </div>
               <div className="gauge-track" style={{ height: 8 }}>
@@ -184,11 +184,11 @@ export default function MetricsPage() {
             </div>
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold" style={{ color: "#d4d4d0" }}>ShieldOps Dynamic Switching</span>
-                <span className="text-xs font-mono" style={{ color: "#34d399" }}>{formatCost(stats.totalCost / 7)}/day</span>
+                <span className="text-xs font-semibold" style={{ color: "#d4d4d0" }}>ShieldOps — Gemini Free Tier</span>
+                <span className="text-xs font-mono" style={{ color: "#34d399" }}>$0/day</span>
               </div>
               <div className="gauge-track" style={{ height: 8 }}>
-                <div className="gauge-fill" style={{ width: `${(stats.totalCost / 7 / 320) * 100}%`, background: "#34d399" }} />
+                <div className="gauge-fill" style={{ width: "2%", background: "#34d399" }} />
               </div>
             </div>
             <div
@@ -196,25 +196,25 @@ export default function MetricsPage() {
               style={{ borderLeft: "3px solid #34d399" }}
             >
               <div>
-                <p className="text-sm font-bold" style={{ color: "#34d399" }}>96% Cost Reduction</p>
-                <p className="text-[10px]" style={{ color: "#3a3a37" }}>Right model for each task tier</p>
+                <p className="text-sm font-bold" style={{ color: "#34d399" }}>100% Cost Reduction</p>
+                <p className="text-[10px]" style={{ color: "#3a3a37" }}>Google Gemini free tier — no credit card</p>
               </div>
               <span className="text-2xl font-mono font-extrabold tabular-nums" style={{ color: "#34d399" }}>
-                {formatCost(stats.costSaved)}
+                $0
               </span>
             </div>
             <div className="grid grid-cols-3 gap-2 mt-2">
               <div className="rounded-lg p-2.5 text-center" style={{ background: "#19191c" }}>
-                <p className="text-xs font-mono font-bold" style={{ color: "#34d399" }}>$0.001</p>
-                <p className="text-[9px]" style={{ color: "#3a3a37" }}>P4 triage</p>
+                <p className="text-xs font-mono font-bold" style={{ color: "#34d399" }}>Free</p>
+                <p className="text-[9px]" style={{ color: "#3a3a37" }}>Gemini 2.5 Flash</p>
               </div>
               <div className="rounded-lg p-2.5 text-center" style={{ background: "#19191c" }}>
-                <p className="text-xs font-mono font-bold" style={{ color: "#fbbf24" }}>$0.05</p>
-                <p className="text-[9px]" style={{ color: "#3a3a37" }}>P3 analysis</p>
+                <p className="text-xs font-mono font-bold" style={{ color: "#34d399" }}>Free</p>
+                <p className="text-[9px]" style={{ color: "#3a3a37" }}>Gemini 2.5 Pro</p>
               </div>
               <div className="rounded-lg p-2.5 text-center" style={{ background: "#19191c" }}>
-                <p className="text-xs font-mono font-bold" style={{ color: "#f87171" }}>$2.50</p>
-                <p className="text-[9px]" style={{ color: "#3a3a37" }}>P1 forensics</p>
+                <p className="text-xs font-mono font-bold" style={{ color: "#5c5c58" }}>15 RPM</p>
+                <p className="text-[9px]" style={{ color: "#3a3a37" }}>Rate limit</p>
               </div>
             </div>
           </div>

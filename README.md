@@ -67,7 +67,7 @@ sequenceDiagram
 
 - Docker & Docker Compose
 - Node.js 18+
-- API keys for OpenAI, Anthropic, and Google AI
+- Google AI API key ([free — no credit card](https://aistudio.google.com/apikey))
 
 ### Setup
 
@@ -115,11 +115,13 @@ Each agent handles one phase of the incident response lifecycle. Models are assi
 
 | Agent | Role | Model | Tools |
 |-------|------|-------|-------|
-| **Sentinel** | Triage incoming alerts, classify severity | GPT-4o-mini | `create_incident`, `list_incidents`, `get_incident_stats` |
-| **Sherlock** | Deep investigation, threat correlation | Claude Sonnet | `check_ip`, `check_hash`, `check_domain`, `check_cve`, `bulk_check_ips`, `get_incident`, `add_evidence`, `update_incident` |
-| **Responder** | Containment and remediation | GPT-4o | `block_ip`, `isolate_pod`, `revoke_token`, `quarantine_user`, `execute_playbook`, `get_action_log`, `update_incident`, `add_evidence` |
-| **Chronicler** | Post-incident reporting, compliance | Gemini Flash | `get_incident`, `update_incident`, `add_evidence`, `get_incident_stats` |
-| **Overseer** | Pipeline orchestration, escalation | Claude Sonnet | All tools (cross-server) |
+| **Sentinel** | Triage incoming alerts, classify severity | Gemini 2.5 Flash | `create_incident`, `list_incidents`, `get_incident_stats` |
+| **Sherlock** | Deep investigation, threat correlation | Gemini 2.5 Pro | `check_ip`, `check_hash`, `check_domain`, `check_cve`, `bulk_check_ips`, `get_incident`, `add_evidence`, `update_incident` |
+| **Responder** | Containment and remediation | Gemini 2.5 Flash | `block_ip`, `isolate_pod`, `revoke_token`, `quarantine_user`, `execute_playbook`, `get_action_log`, `update_incident`, `add_evidence` |
+| **Chronicler** | Post-incident reporting, compliance | Gemini 2.5 Flash | `get_incident`, `update_incident`, `add_evidence`, `get_incident_stats` |
+| **Overseer** | Pipeline orchestration, escalation | Gemini 2.5 Pro | All tools (cross-server) |
+
+> All agents run on **Google Gemini free tier** — no credit card, no API costs. 15 requests/min, 1000 requests/day.
 
 Archestra's **Dual LLM Security Engine** quarantines untrusted data before agents process it. **Tool Policies** enforce least-privilege — Sentinel can only triage, Responder can only contain.
 
@@ -144,8 +146,8 @@ All servers use stdio transport and are registered in Archestra's MCP Registry w
 | MCP Registry | 3 custom servers registered as private tools |
 | Dual LLM Security | Quarantine untrusted alert data before agent processing |
 | Tool Policies | Per-agent tool access — least-privilege enforcement |
-| Cost & Limits | Daily budgets per agent ($0.50–$30/day) |
-| LLM Proxies | Multi-provider routing (OpenAI, Anthropic, Google AI) |
+| Cost & Limits | Zero-cost operation on Gemini free tier |
+| LLM Proxies | Google Gemini routing via Archestra proxy |
 | Observability | Prometheus metrics + OpenTelemetry traces |
 | Terraform IaC | Full config in `terraform/` |
 | Teams & RBAC | SOC team with role-based access |
@@ -154,26 +156,26 @@ All servers use stdio transport and are registered in Archestra's MCP Registry w
 
 ## Cost Model
 
-Dynamic model selection reduces cost by ~96% compared to using a single premium model:
+ShieldOps runs entirely on Google Gemini's free tier — zero API costs.
 
 ```mermaid
-pie title Daily Cost Distribution
-    "Sentinel (GPT-4o-mini)" : 0.47
-    "Sherlock (Claude Sonnet)" : 3.50
-    "Responder (GPT-4o)" : 2.10
-    "Chronicler (Gemini Flash)" : 0.15
-    "Overseer (Claude Sonnet)" : 5.80
+pie title Model Distribution
+    "Gemini 2.5 Flash (Sentinel)" : 3
+    "Gemini 2.5 Pro (Sherlock)" : 3
+    "Gemini 2.5 Flash (Responder)" : 3
+    "Gemini 2.5 Flash (Chronicler)" : 1
+    "Gemini 2.5 Pro (Overseer)" : 3
 ```
 
-| Task tier | Model | Cost/call | Rationale |
-|-----------|-------|-----------|-----------|
-| P4 triage | GPT-4o-mini | $0.001 | Simple classification |
-| P3 analysis | GPT-4o | $0.03 | Structured tool use |
-| P1 forensics | Claude Sonnet | $0.05 | Complex reasoning chains |
-| Reporting | Gemini Flash | $0.001 | Document generation |
-| Orchestration | Claude Sonnet | $0.05 | High-stakes decisions |
+| Task tier | Model | Cost | Rate limit |
+|-----------|-------|------|------------|
+| P4 triage | Gemini 2.5 Flash | Free | 15 RPM |
+| P3 analysis | Gemini 2.5 Flash | Free | 15 RPM |
+| P1 forensics | Gemini 2.5 Pro | Free | 15 RPM |
+| Reporting | Gemini 2.5 Flash | Free | 15 RPM |
+| Orchestration | Gemini 2.5 Pro | Free | 15 RPM |
 
-**Single-model baseline:** ~$320/day &nbsp;→&nbsp; **ShieldOps dynamic switching:** ~$12/day
+**Commercial equivalent:** ~$320/day &nbsp;→&nbsp; **ShieldOps with Gemini:** $0/day
 
 ---
 
@@ -217,13 +219,12 @@ shieldops/
 
 After starting the stack, open `localhost:3000`:
 
-1. **LLM API Keys** — Add OpenAI, Anthropic, and Google AI keys
+1. **LLM API Key** — Add your Google AI key (free at [aistudio.google.com](https://aistudio.google.com/apikey))
 2. **Security Engine** — Enable Dual LLM for prompt injection protection
 3. **MCP Registry** — Register the 3 tool servers
 4. **Agents** — Create the 5 agents with their system prompts
 5. **Tool Policies** — Assign per-agent tool access
-6. **Cost & Limits** — Set daily budgets
-7. **Teams** — Create SOC team and assign roles
+6. **Teams** — Create SOC team and assign roles
 
 Or apply everything at once with Terraform:
 

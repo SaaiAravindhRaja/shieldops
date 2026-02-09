@@ -5,9 +5,7 @@ import { formatCost, formatTimeAgo, cn, AGENT_COLORS } from "@/lib/utils";
 import { Clock, DollarSign, Wrench, Activity, Zap } from "lucide-react";
 
 const providerMeta: Record<string, { color: string; bg: string }> = {
-  OpenAI: { color: "#34d399", bg: "rgba(52,211,153,0.08)" },
-  Anthropic: { color: "#fb923c", bg: "rgba(251,146,60,0.08)" },
-  Google: { color: "#60a5fa", bg: "rgba(96,165,250,0.08)" },
+  Google: { color: "#34d399", bg: "rgba(52,211,153,0.08)" },
 };
 
 export default function AgentsPage() {

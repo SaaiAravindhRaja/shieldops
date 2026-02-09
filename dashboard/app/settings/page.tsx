@@ -71,7 +71,7 @@ export default function SettingsPage() {
           <FeatureRow label="MCP Registry" enabled desc="3 custom MCP servers registered" />
           <FeatureRow label="Tool Policies" enabled desc="Per-agent tool access controls" />
           <FeatureRow label="Cost & Limits" enabled desc="Per-agent daily budgets enforced" />
-          <FeatureRow label="LLM Proxies" enabled desc="Multi-model routing: OpenAI, Anthropic, Google AI" />
+          <FeatureRow label="LLM Proxies" enabled desc="Google Gemini routing (free tier)" />
           <FeatureRow label="Observability" enabled desc="Prometheus metrics + OpenTelemetry traces" />
           <FeatureRow label="Terraform IaC" enabled desc="Infrastructure defined as code" />
           <FeatureRow label="Teams & RBAC" enabled desc="SOC team with role-based access" />

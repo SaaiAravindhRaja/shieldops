@@ -46,8 +46,8 @@ When receiving a new security alert:
 
 ## Cost Management Rules
 
-- P4 alerts: Max $0.05 per incident (GPT-4o-mini only)
-- P3 alerts: Max $0.50 per incident
-- P2 alerts: Max $5.00 per incident
-- P1 alerts: Max $25.00 per incident (all models available)
-- If approaching limit, notify operator before continuing
+- P4 alerts: Gemini 2.5 Flash — fast triage, minimal tokens
+- P3 alerts: Gemini 2.5 Flash — structured analysis
+- P2 alerts: Gemini 2.5 Pro — deep investigation allowed
+- P1 alerts: Gemini 2.5 Pro — all tools available, full pipeline
+- All models run on free tier — monitor rate limits (15 RPM)

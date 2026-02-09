@@ -10,20 +10,8 @@ variable "archestra_api_key" {
   sensitive   = true
 }
 
-variable "openai_api_key" {
-  description = "OpenAI API key for GPT-4o and GPT-4o-mini"
-  type        = string
-  sensitive   = true
-}
-
-variable "anthropic_api_key" {
-  description = "Anthropic API key for Claude Sonnet"
-  type        = string
-  sensitive   = true
-}
-
 variable "google_ai_api_key" {
-  description = "Google AI API key for Gemini Flash"
+  description = "Google AI API key for Gemini (free tier — no credit card required)"
   type        = string
   sensitive   = true
 }
