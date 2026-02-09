@@ -1,0 +1,566 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════
+   SHIELDOPS — Tactical Grid Design System
+   Inspired by: CrowdStrike Falcon × Linear × Bloomberg
+   ═══════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surface scale (warm blacks) ──────────────── */
+  --surface-0: #050505;
+  --surface-1: #0a0a0b;
+  --surface-2: #111113;
+  --surface-3: #19191c;
+  --surface-4: #212124;
+  --surface-5: #2a2a2e;
+
+  /* ── Border scale ─────────────────────────────── */
+  --border-1: #1a1a1e;
+  --border-2: #252529;
+  --border-3: #333338;
+
+  /* ── Text scale ───────────────────────────────── */
+  --text-1: #fafaf9;
+  --text-2: #d4d4d0;
+  --text-3: #8a8a86;
+  --text-4: #5c5c58;
+  --text-5: #3a3a37;
+
+  /* ── Accent: Emerald (operational green) ──────── */
+  --accent: #34d399;
+  --accent-dim: #059669;
+  --accent-muted: rgba(52, 211, 153, 0.1);
+
+  /* ── Severity ─────────────────────────────────── */
+  --critical: #f87171;
+  --critical-muted: rgba(248, 113, 113, 0.1);
+  --high: #fb923c;
+  --high-muted: rgba(251, 146, 60, 0.1);
+  --medium: #fbbf24;
+  --medium-muted: rgba(251, 191, 36, 0.1);
+  --low: #34d399;
+  --low-muted: rgba(52, 211, 153, 0.1);
+
+  /* ── Semantic ─────────────────────────────────── */
+  --info: #60a5fa;
+  --info-muted: rgba(96, 165, 250, 0.1);
+
+  /* ── Fonts ────────────────────────────────────── */
+  --font-display: var(--font-plus-jakarta);
+  --font-body: var(--font-plus-jakarta);
+  --font-mono: var(--font-geist-mono);
+}
+
+@theme inline {
+  --color-background: var(--surface-0);
+  --color-foreground: var(--text-1);
+  --color-card: var(--surface-2);
+  --color-border: var(--border-1);
+  --color-muted: var(--surface-3);
+  --color-muted-foreground: var(--text-3);
+  --color-accent: var(--accent);
+  --color-p1: var(--critical);
+  --color-p2: var(--high);
+  --color-p3: var(--medium);
+  --color-p4: var(--low);
+  --color-success: var(--accent);
+  --color-warning: var(--medium);
+  --color-danger: var(--critical);
+  --font-sans: var(--font-plus-jakarta);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* ═══════════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════════ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--surface-0);
+  color: var(--text-1);
+  font-family: var(--font-display), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "ss01", "ss02", "cv01";
+}
+
+/* ── Dot Grid Background ────────────────────────── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: radial-gradient(circle at center, var(--border-1) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ── Subtle vignette ────────────────────────────── */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, transparent 40%, var(--surface-0) 100%);
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   SCROLLBAR
+   ═══════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-3);
+}
+
+/* ═══════════════════════════════════════════════════
+   CARD SYSTEM
+   ═══════════════════════════════════════════════════ */
+.card {
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.card:hover {
+  border-color: var(--border-2);
+  background: var(--surface-3);
+}
+
+/* Card with glow (legacy compat) */
+.card-glow {
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.card-glow:hover {
+  border-color: var(--border-2);
+}
+
+/* ── Left-border accent cards ───────────────────── */
+.card-accent-critical {
+  border-left: 3px solid var(--critical);
+}
+.card-accent-high {
+  border-left: 3px solid var(--high);
+}
+.card-accent-medium {
+  border-left: 3px solid var(--medium);
+}
+.card-accent-low {
+  border-left: 3px solid var(--accent);
+}
+.card-accent-info {
+  border-left: 3px solid var(--info);
+}
+
+/* ═══════════════════════════════════════════════════
+   COMMAND BAR
+   ═══════════════════════════════════════════════════ */
+.command-bar {
+  height: 44px;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-1);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 24px;
+  font-size: 12px;
+  z-index: 50;
+}
+
+.command-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-4);
+  font-family: var(--font-mono), monospace;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.command-bar-value {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.command-bar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--border-1);
+}
+
+/* ═══════════════════════════════════════════════════
+   STATUS LED
+   ═══════════════════════════════════════════════════ */
+.led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.led-green {
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(52, 211, 153, 0.4);
+  animation: led-pulse 2.5s ease-in-out infinite;
+}
+
+.led-amber {
+  background: var(--medium);
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.3);
+  animation: led-pulse 1.5s ease-in-out infinite;
+}
+
+.led-red {
+  background: var(--critical);
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.4);
+  animation: led-pulse 1s ease-in-out infinite;
+}
+
+.led-off {
+  background: var(--text-5);
+}
+
+@keyframes led-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Legacy compat */
+.status-online {
+  animation: led-pulse 2.5s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════
+   SEVERITY DOTS
+   ═══════════════════════════════════════════════════ */
+.severity-dot-p1 {
+  background: var(--critical);
+  box-shadow: 0 0 6px rgba(248, 113, 113, 0.4);
+  animation: led-pulse 2s ease-in-out infinite;
+}
+.severity-dot-p2 {
+  background: var(--high);
+}
+
+/* ═══════════════════════════════════════════════════
+   GAUGE / PROGRESS
+   ═══════════════════════════════════════════════════ */
+.gauge-track {
+  background: var(--surface-4);
+  border-radius: 3px;
+  height: 4px;
+  overflow: hidden;
+}
+
+.gauge-fill {
+  height: 100%;
+  border-radius: 3px;
+  animation: gauge-grow 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes gauge-grow {
+  from { width: 0%; }
+}
+
+/* ═══════════════════════════════════════════════════
+   ENTRANCE ANIMATIONS
+   ═══════════════════════════════════════════════════ */
+.animate-in {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes enter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.delay-1 { animation-delay: 0.03s; }
+.delay-2 { animation-delay: 0.06s; }
+.delay-3 { animation-delay: 0.09s; }
+.delay-4 { animation-delay: 0.12s; }
+.delay-5 { animation-delay: 0.15s; }
+.delay-6 { animation-delay: 0.18s; }
+.delay-7 { animation-delay: 0.21s; }
+.delay-8 { animation-delay: 0.24s; }
+
+/* ═══════════════════════════════════════════════════
+   SIDEBAR
+   ═══════════════════════════════════════════════════ */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-3);
+  transition: color 0.15s ease, background 0.15s ease;
+  position: relative;
+}
+
+.sidebar-link:hover {
+  color: var(--text-2);
+  background: var(--surface-3);
+}
+
+.sidebar-link-active {
+  color: var(--text-1);
+  background: var(--surface-3);
+}
+
+.sidebar-link-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: var(--accent);
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTION HEADERS
+   ═══════════════════════════════════════════════════ */
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  font-family: var(--font-mono), monospace;
+}
+
+/* ═══════════════════════════════════════════════════
+   DATA TABLE ROWS
+   ═══════════════════════════════════════════════════ */
+.table-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-1);
+  transition: background 0.15s ease;
+}
+
+.table-row:hover {
+  background: var(--surface-2);
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   BADGE / TAG SYSTEM
+   ═══════════════════════════════════════════════════ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-mono), monospace;
+  padding: 2px 8px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.badge-critical {
+  background: var(--critical-muted);
+  color: var(--critical);
+}
+
+.badge-high {
+  background: var(--high-muted);
+  color: var(--high);
+}
+
+.badge-medium {
+  background: var(--medium-muted);
+  color: var(--medium);
+}
+
+.badge-low {
+  background: var(--low-muted);
+  color: var(--accent);
+}
+
+.badge-info {
+  background: var(--info-muted);
+  color: var(--info);
+}
+
+.badge-neutral {
+  background: var(--surface-4);
+  color: var(--text-3);
+}
+
+/* ═══════════════════════════════════════════════════
+   TIMELINE
+   ═══════════════════════════════════════════════════ */
+.timeline-connector {
+  position: absolute;
+  left: 19px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--border-2), transparent);
+}
+
+/* ═══════════════════════════════════════════════════
+   CHART TOOLTIP (Recharts)
+   ═══════════════════════════════════════════════════ */
+.chart-tooltip {
+  background: var(--surface-3) !important;
+  border: 1px solid var(--border-2) !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ═══════════════════════════════════════════════════
+   TABULAR NUMBERS
+   ═══════════════════════════════════════════════════ */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════
+   FOCUS RING
+   ═══════════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════
+   SELECTION
+   ═══════════════════════════════════════════════════ */
+::selection {
+  background: rgba(52, 211, 153, 0.2);
+  color: var(--text-1);
+}
+
+/* ═══════════════════════════════════════════════════
+   INPUT
+   ═══════════════════════════════════════════════════ */
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  color: var(--text-2);
+  font-size: 13px;
+  font-family: var(--font-mono), monospace;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.1);
+}
+
+.input::placeholder {
+  color: var(--text-5);
+}
+
+/* ═══════════════════════════════════════════════════
+   SELECT
+   ═══════════════════════════════════════════════════ */
+select {
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  color: var(--text-3);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+select option {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+/* ═══════════════════════════════════════════════════
+   THREAT LEVEL BAR
+   ═══════════════════════════════════════════════════ */
+.threat-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-4);
+  overflow: hidden;
+}
+
+.threat-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ═══════════════════════════════════════════════════
+   NAV ACTIVE (legacy compat)
+   ═══════════════════════════════════════════════════ */
+.nav-active {
+  background: var(--surface-3);
+  color: var(--text-1);
+}
+
+/* ═══════════════════════════════════════════════════
+   BORDER TOP GLOW (legacy compat)
+   ═══════════════════════════════════════════════════ */
+.border-top-glow {
+  border-top: 1px solid var(--border-2);
+}
+
+/* ═══════════════════════════════════════════════════
+   GLASS CARD (legacy compat)
+   ═══════════════════════════════════════════════════ */
+.glass-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border-1);
+  border-radius: 10px;
+}
+
+/* ═══════════════════════════════════════════════════
+   PROGRESS (legacy compat)
+   ═══════════════════════════════════════════════════ */
+.progress-track {
+  background: var(--surface-4);
+  border-radius: 3px;
+  height: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
