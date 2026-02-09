@@ -1,3 +1,14 @@
+```
+   _____ _     _      _     _  ___
+  / ____| |   (_)    | |   | |/ _ \
+ | (___ | |__  _  ___| | __| | | | |_ __  ___
+  \___ \| '_ \| |/ _ \ |/ _` | | | | '_ \/ __|
+  ____) | | | | |  __/ | (_| | |_| | |_) \__ \
+ |_____/|_| |_|_|\___|_|\__,_|\___/| .__/|___/
+                                    | |
+                                    |_|
+```
+
 # ShieldOps
 
 **Autonomous AI Security Operations Center** — detect, investigate, and respond to security incidents with a multi-agent pipeline orchestrated through [Archestra](https://archestra.ai).
@@ -8,46 +19,123 @@
 
 ## Architecture
 
-```
-                          ┌─────────────────────────────────────────────────┐
-                          │              Archestra Platform                 │
-                          │  ┌─────────┐  ┌──────────┐  ┌──────────────┐  │
-                          │  │ MCP     │  │ Dual LLM │  │ Tool         │  │
-                          │  │ Registry│  │ Security │  │ Policies     │  │
-                          │  └─────────┘  └──────────┘  └──────────────┘  │
-                          │  ┌─────────┐  ┌──────────┐  ┌──────────────┐  │
-                          │  │ LLM     │  │ Cost &   │  │ Observability│  │
-                          │  │ Proxies │  │ Limits   │  │ (OTel)       │  │
-                          │  └─────────┘  └──────────┘  └──────────────┘  │
-                          └──────────────────┬──────────────────────────────┘
-                                             │
-                    ┌────────────────────────┼────────────────────────┐
-                    │                        │                        │
-         ┌──────────▼──────────┐  ┌──────────▼──────────┐  ┌──────────▼──────────┐
-         │   Incident DB MCP   │  │  Threat Intel MCP   │  │  Security Playbook  │
-         │                     │  │                     │  │       MCP           │
-         │  create_incident    │  │  check_ip           │  │  block_ip           │
-         │  update_incident    │  │  check_hash         │  │  isolate_pod        │
-         │  get_incident       │  │  check_domain       │  │  revoke_token       │
-         │  list_incidents     │  │  check_cve          │  │  quarantine_user    │
-         │  add_evidence       │  │  bulk_check_ips     │  │  execute_playbook   │
-         │  get_incident_stats │  │                     │  │  get_action_log     │
-         └──────────┬──────────┘  └─────────────────────┘  └─────────────────────┘
-                    │
-              ┌─────▼─────┐
-              │ PostgreSQL │
-              └───────────┘
+```mermaid
+graph TB
+    subgraph ALERTS["Incoming Alerts"]
+        A1[SIEM Alerts]
+        A2[Cloud Events]
+        A3[Endpoint Logs]
+    end
 
-    ┌────────────────────────────────────────────────────────────────────────────┐
-    │                          AI Agent Pipeline                                │
-    │                                                                           │
-    │  Alert ──► Sentinel ──► Sherlock ──► Responder ──► Chronicler             │
-    │            (Triage)     (Investigate)  (Contain)    (Report)               │
-    │            GPT-4o-mini  Claude Sonnet  GPT-4o       Gemini Flash           │
-    │                                                                           │
-    │                         Overseer (Orchestrator)                            │
-    │                         Claude Sonnet                                      │
-    └────────────────────────────────────────────────────────────────────────────┘
+    subgraph ARCHESTRA["Archestra Platform"]
+        direction TB
+        subgraph SECURITY["Security Layer"]
+            DUAL[Dual LLM Engine]
+            POLICIES[Tool Policies]
+            RBAC[Teams & RBAC]
+        end
+        subgraph INFRA["Infrastructure"]
+            REGISTRY[MCP Registry]
+            PROXY[LLM Proxies]
+            COST[Cost & Limits]
+            OTEL[Observability]
+        end
+    end
+
+    subgraph AGENTS["Agent Pipeline"]
+        direction LR
+        S[Sentinel<br/><i>GPT-4o-mini</i><br/>Triage] --> SH[Sherlock<br/><i>Claude Sonnet</i><br/>Investigate]
+        SH --> R[Responder<br/><i>GPT-4o</i><br/>Contain]
+        R --> C[Chronicler<br/><i>Gemini Flash</i><br/>Report]
+        O[Overseer<br/><i>Claude Sonnet</i><br/>Orchestrate] -.->|supervises| S
+        O -.->|supervises| SH
+        O -.->|supervises| R
+        O -.->|supervises| C
+    end
+
+    subgraph MCP["MCP Tool Servers"]
+        direction LR
+        IDB["incident-db<br/>6 tools"]
+        TI["threat-intel<br/>5 tools"]
+        SP["security-playbook<br/>6 tools"]
+    end
+
+    subgraph DATA["Data Layer"]
+        PG[(PostgreSQL)]
+        PROM[(Prometheus)]
+    end
+
+    ALERTS --> ARCHESTRA
+    ARCHESTRA --> AGENTS
+    AGENTS --> MCP
+    MCP --> DATA
+
+    subgraph DASHBOARD["Dashboard · Next.js 16"]
+        direction LR
+        D1[Overview]
+        D2[Incidents]
+        D3[Agents]
+        D4[Metrics]
+    end
+
+    DATA --> DASHBOARD
+
+    style ARCHESTRA fill:#1a1a2e,stroke:#34d399,color:#fff
+    style AGENTS fill:#16213e,stroke:#60a5fa,color:#fff
+    style MCP fill:#1a1a2e,stroke:#fb923c,color:#fff
+    style SECURITY fill:#0f3460,stroke:#34d399,color:#fff
+    style INFRA fill:#0f3460,stroke:#34d399,color:#fff
+    style DATA fill:#1a1a2e,stroke:#fbbf24,color:#fff
+    style DASHBOARD fill:#1a1a2e,stroke:#a78bfa,color:#fff
+    style ALERTS fill:#1a1a2e,stroke:#f87171,color:#fff
+
+    style S fill:#34d399,stroke:#fff,color:#000
+    style SH fill:#fb923c,stroke:#fff,color:#000
+    style R fill:#fbbf24,stroke:#fff,color:#000
+    style C fill:#60a5fa,stroke:#fff,color:#000
+    style O fill:#a78bfa,stroke:#fff,color:#000
+```
+
+### Agent Pipeline Flow
+
+```mermaid
+sequenceDiagram
+    participant Alert as Incoming Alert
+    participant S as Sentinel
+    participant SH as Sherlock
+    participant R as Responder
+    participant CH as Chronicler
+    participant O as Overseer
+
+    Alert->>S: New security event
+    activate S
+    S->>S: Classify severity (P1-P4)
+    S->>S: Create incident record
+    S-->>SH: Route for investigation
+    deactivate S
+
+    activate SH
+    SH->>SH: Lookup IPs, hashes, domains
+    SH->>SH: Correlate threat intel
+    SH->>SH: Attach evidence
+    SH-->>R: Investigation complete
+    deactivate SH
+
+    activate R
+    R->>O: Request approval (P1/P2 actions)
+    activate O
+    O-->>R: Approved
+    deactivate O
+    R->>R: Block IPs, revoke tokens
+    R->>R: Isolate affected hosts
+    R-->>CH: Containment complete
+    deactivate R
+
+    activate CH
+    CH->>CH: Generate incident report
+    CH->>CH: Check compliance (GDPR, SOC 2)
+    CH->>CH: Close incident
+    deactivate CH
 ```
 
 ---
@@ -102,17 +190,17 @@ npx tsx scripts/seed-data.ts
 
 ## Agents
 
-Each agent handles one phase of the incident response lifecycle. Different models are assigned based on task complexity and cost.
+Each agent handles one phase of the incident response lifecycle. Models are assigned based on task complexity and cost.
 
 | Agent | Role | Model | Tools |
 |-------|------|-------|-------|
 | **Sentinel** | Triage incoming alerts, classify severity | GPT-4o-mini | `create_incident`, `list_incidents`, `get_incident_stats` |
 | **Sherlock** | Deep investigation, threat correlation | Claude Sonnet | `check_ip`, `check_hash`, `check_domain`, `check_cve`, `bulk_check_ips`, `get_incident`, `add_evidence`, `update_incident` |
-| **Responder** | Containment and remediation actions | GPT-4o | `block_ip`, `isolate_pod`, `revoke_token`, `quarantine_user`, `execute_playbook`, `get_action_log`, `update_incident`, `add_evidence` |
-| **Chronicler** | Post-incident reporting, compliance checks | Gemini Flash | `get_incident`, `update_incident`, `add_evidence`, `get_incident_stats` |
-| **Overseer** | Pipeline orchestration, escalation review | Claude Sonnet | All tools (cross-server access) |
+| **Responder** | Containment and remediation | GPT-4o | `block_ip`, `isolate_pod`, `revoke_token`, `quarantine_user`, `execute_playbook`, `get_action_log`, `update_incident`, `add_evidence` |
+| **Chronicler** | Post-incident reporting, compliance | Gemini Flash | `get_incident`, `update_incident`, `add_evidence`, `get_incident_stats` |
+| **Overseer** | Pipeline orchestration, escalation | Claude Sonnet | All tools (cross-server) |
 
-Archestra's **Dual LLM Security Engine** quarantines untrusted data (phishing payloads, prompt injections in alert content) before agents process it. **Tool Policies** restrict which agents can call which tools — Sentinel can only triage, Responder can only contain.
+Archestra's **Dual LLM Security Engine** quarantines untrusted data before agents process it. **Tool Policies** enforce least-privilege — Sentinel can only triage, Responder can only contain.
 
 ---
 
@@ -147,6 +235,15 @@ All servers use stdio transport and are registered in Archestra's MCP Registry w
 
 Dynamic model selection reduces cost by ~96% compared to using a single premium model:
 
+```mermaid
+pie title Daily Cost Distribution
+    "Sentinel (GPT-4o-mini)" : 0.47
+    "Sherlock (Claude Sonnet)" : 3.50
+    "Responder (GPT-4o)" : 2.10
+    "Chronicler (Gemini Flash)" : 0.15
+    "Overseer (Claude Sonnet)" : 5.80
+```
+
 | Task tier | Model | Cost/call | Rationale |
 |-----------|-------|-----------|-----------|
 | P4 triage | GPT-4o-mini | $0.001 | Simple classification |
@@ -155,7 +252,7 @@ Dynamic model selection reduces cost by ~96% compared to using a single premium 
 | Reporting | Gemini Flash | $0.001 | Document generation |
 | Orchestration | Claude Sonnet | $0.05 | High-stakes decisions |
 
-Single-model baseline: ~$320/day. ShieldOps with dynamic switching: ~$12/day.
+**Single-model baseline:** ~$320/day &nbsp;→&nbsp; **ShieldOps dynamic switching:** ~$12/day
 
 ---
 
