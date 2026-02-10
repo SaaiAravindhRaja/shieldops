@@ -23,10 +23,12 @@ import {
   ShieldBan,
   ExternalLink,
   Terminal,
+  Lock,
 } from "lucide-react";
 
 /* ── Agent styling ────────────────────────────── */
 const AGENT_STYLE: Record<string, { color: string; bg: string; icon: typeof Shield }> = {
+  Archestra: { color: "#c084fc", bg: "rgba(192,132,252,0.1)", icon: Lock },
   Sentinel: { color: "#34d399", bg: "rgba(52,211,153,0.1)", icon: Shield },
   Sherlock: { color: "#fb923c", bg: "rgba(251,146,60,0.1)", icon: ShieldAlert },
   Responder: { color: "#fbbf24", bg: "rgba(251,191,36,0.1)", icon: ShieldCheck },
@@ -34,14 +36,16 @@ const AGENT_STYLE: Record<string, { color: string; bg: string; icon: typeof Shie
   Overseer: { color: "#a78bfa", bg: "rgba(167,139,250,0.1)", icon: ShieldX },
 };
 
-const STAGES = ["triage", "investigate", "contain", "report"] as const;
+const STAGES = ["quarantine", "triage", "investigate", "contain", "report"] as const;
 const STAGE_LABELS: Record<string, string> = {
+  quarantine: "Quarantine",
   triage: "Triage",
   investigate: "Investigate",
   contain: "Contain",
   report: "Report",
 };
 const STAGE_AGENTS: Record<string, string> = {
+  quarantine: "Archestra",
   triage: "Sentinel",
   investigate: "Sherlock",
   contain: "Responder",

@@ -14,12 +14,12 @@ export interface SimEvidence {
 export interface SimStep {
   id: string;
   delay: number;
-  agent: "Sentinel" | "Sherlock" | "Responder" | "Chronicler" | "Overseer";
+  agent: "Sentinel" | "Sherlock" | "Responder" | "Chronicler" | "Overseer" | "Archestra";
   action: string;
   details: string;
   toolCall?: SimToolCall;
   evidence?: SimEvidence;
-  stage: "triage" | "investigate" | "contain" | "report" | "oversee";
+  stage: "quarantine" | "triage" | "investigate" | "contain" | "report" | "oversee";
   severity?: string;
   cost: number;
 }
@@ -43,6 +43,24 @@ export const scenarios: Scenario[] = [
     severity: "P2 → P1",
     mitre: "T1078 Valid Accounts, T1133 External Remote Services",
     steps: [
+      {
+        id: "t0a",
+        delay: 400,
+        agent: "Archestra",
+        action: "Dual LLM Security — Quarantine",
+        details: "Incoming SIEM payload intercepted by Archestra Security Engine. Untrusted data isolated in quarantine sandbox. Sub-agent analyzing for prompt injection, data exfiltration vectors, and payload anomalies.",
+        stage: "quarantine",
+        cost: 0,
+      },
+      {
+        id: "t0b",
+        delay: 1200,
+        agent: "Archestra",
+        action: "Security Clearance — Passed",
+        details: "Payload sanitized. No injection patterns detected. Tool policy check: Sentinel has access to incident-db (create, list, stats). Routing to Sentinel via Gemini 2.5 Flash (cost-optimized model selection).",
+        stage: "quarantine",
+        cost: 0,
+      },
       {
         id: "t1",
         delay: 600,
@@ -282,6 +300,24 @@ export const scenarios: Scenario[] = [
     mitre: "T1195.002 Supply Chain Compromise",
     steps: [
       {
+        id: "s0a",
+        delay: 400,
+        agent: "Archestra",
+        action: "Dual LLM Security — Quarantine",
+        details: "CI pipeline payload intercepted. Archestra Security Engine isolating untrusted build artifact metadata. Scanning for embedded injection vectors in package manifest.",
+        stage: "quarantine",
+        cost: 0,
+      },
+      {
+        id: "s0b",
+        delay: 1100,
+        agent: "Archestra",
+        action: "Security Clearance — Passed",
+        details: "No injection in payload. Tool policy verified: Sentinel → incident-db (create). Dynamic model routing: Gemini 2.5 Flash selected for triage (cost tier: $0). Releasing to agent pipeline.",
+        stage: "quarantine",
+        cost: 0,
+      },
+      {
         id: "s1",
         delay: 600,
         agent: "Sentinel",
@@ -461,6 +497,24 @@ export const scenarios: Scenario[] = [
     severity: "P2 → P1",
     mitre: "T1048.003 Exfiltration Over DNS, T1071.004 Application Layer Protocol",
     steps: [
+      {
+        id: "d0a",
+        delay: 400,
+        agent: "Archestra",
+        action: "Dual LLM Security — Quarantine",
+        details: "Network monitor payload intercepted. Archestra Security Engine quarantining DNS query samples. Sub-agent checking for embedded exfiltration payloads within the alert metadata itself.",
+        stage: "quarantine",
+        cost: 0,
+      },
+      {
+        id: "d0b",
+        delay: 1300,
+        agent: "Archestra",
+        action: "Security Clearance — Flagged",
+        details: "Alert payload contains raw DNS query strings with base64-encoded subdomains. Data compressed and isolated — agents will receive sanitized summary only. Tool policy: Sherlock → threat-intel (check_ip, check_domain). Model: Gemini 2.5 Pro (forensics tier).",
+        stage: "quarantine",
+        cost: 0,
+      },
       {
         id: "d1",
         delay: 600,
