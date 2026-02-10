@@ -1,12 +1,8 @@
 "use client";
 
-import { getStats, agents, incidents } from "@/lib/mock-data";
+import { useStats, useAgents, useIncidents } from "@/lib/use-data";
 
-const stats = getStats();
-const activeAgents = agents.filter((a) => a.status !== "offline").length;
-const p1Count = incidents.filter((i) => i.severity === "P1" && !["resolved", "closed"].includes(i.status)).length;
-
-function ThreatLevel() {
+function ThreatLevel({ p1Count }: { p1Count: number }) {
   const level = p1Count >= 2 ? "ELEVATED" : p1Count >= 1 ? "GUARDED" : "NOMINAL";
   const color = p1Count >= 2 ? "#f87171" : p1Count >= 1 ? "#fbbf24" : "#34d399";
   const ledClass = p1Count >= 2 ? "led-red" : p1Count >= 1 ? "led-amber" : "led-green";
@@ -23,9 +19,18 @@ function ThreatLevel() {
 }
 
 export function CommandBar() {
+  const { data: stats, source } = useStats();
+  const { data: agents } = useAgents();
+  const { data: incidents } = useIncidents();
+
+  const activeAgents = agents.filter((a) => a.status !== "offline").length;
+  const p1Count = incidents.filter(
+    (i) => i.severity === "P1" && !["resolved", "closed"].includes(i.status)
+  ).length;
+
   return (
     <div className="command-bar">
-      <ThreatLevel />
+      <ThreatLevel p1Count={p1Count} />
 
       <div className="command-bar-divider" />
 
@@ -65,9 +70,9 @@ export function CommandBar() {
       <div style={{ flex: 1 }} />
 
       <div className="command-bar-item">
-        <div className="led led-green" />
-        <span className="command-bar-value" style={{ color: "#34d399" }}>
-          OPERATIONAL
+        <div className={`led ${source === "db" ? "led-green" : "led-amber"}`} />
+        <span className="command-bar-value" style={{ color: source === "db" ? "#34d399" : "#fbbf24" }}>
+          {source === "db" ? "LIVE" : "DEMO"}
         </span>
       </div>
     </div>

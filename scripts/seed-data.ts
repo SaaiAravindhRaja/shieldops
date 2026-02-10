@@ -5,7 +5,9 @@ import { Pool } from "pg";
 // ---------------------------------------------------------------------------
 
 const pool = new Pool({
-  connectionString: "postgresql://shieldops:shieldops@localhost:5432/shieldops",
+  connectionString:
+    process.env.DATABASE_URL ||
+    "postgresql://archestra:archestra@localhost:5432/archestra",
 });
 
 function hoursAgo(h: number): string {
@@ -40,7 +42,7 @@ interface IncidentRow {
   type: string;
   source: string;
   assigned_agent: string | null;
-  cost_total: number;
+  cost_usd: number;
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
@@ -50,10 +52,11 @@ interface EvidenceRow {
   id: string;
   incident_id: string;
   type: string;
-  value: string;
+  content: string;
   source: string;
+  collected_by: string;
   threat_score: number | null;
-  added_at: string;
+  created_at: string;
 }
 
 interface TimelineRow {
@@ -67,7 +70,7 @@ interface TimelineRow {
 }
 
 const incidents: IncidentRow[] = [
-  // ── P1 ──────────────────────────────────────────────────────────────────
+  // -- P1 -----------------------------------------------------------------
   {
     id: "INC-001",
     title: "Active Data Breach - Customer Database Exposed",
@@ -78,7 +81,7 @@ const incidents: IncidentRow[] = [
     type: "data_breach",
     source: "CloudTrail Alert",
     assigned_agent: "Sherlock",
-    cost_total: 1250,
+    cost_usd: 0.125,
     created_at: hoursAgo(2),
     updated_at: minutesAgo(8),
     resolved_at: null,
@@ -93,13 +96,13 @@ const incidents: IncidentRow[] = [
     type: "malware",
     source: "Endpoint Detection",
     assigned_agent: "Responder",
-    cost_total: 2100,
+    cost_usd: 0.21,
     created_at: hoursAgo(5),
     updated_at: minutesAgo(15),
     resolved_at: null,
   },
 
-  // ── P2 ──────────────────────────────────────────────────────────────────
+  // -- P2 -----------------------------------------------------------------
   {
     id: "INC-003",
     title: "Phishing Campaign with Hidden Prompt Injection",
@@ -110,7 +113,7 @@ const incidents: IncidentRow[] = [
     type: "phishing",
     source: "Email Gateway",
     assigned_agent: "Chronicler",
-    cost_total: 340,
+    cost_usd: 0.034,
     created_at: daysAgo(1),
     updated_at: daysAgo(0, 18),
     resolved_at: daysAgo(0, 18),
@@ -125,7 +128,7 @@ const incidents: IncidentRow[] = [
     type: "suspicious_commit",
     source: "GitHub Webhook",
     assigned_agent: "Sherlock",
-    cost_total: 520,
+    cost_usd: 0.052,
     created_at: hoursAgo(6),
     updated_at: hoursAgo(1),
     resolved_at: null,
@@ -140,13 +143,13 @@ const incidents: IncidentRow[] = [
     type: "ddos",
     source: "Prometheus Alert",
     assigned_agent: "Chronicler",
-    cost_total: 890,
+    cost_usd: 0.089,
     created_at: daysAgo(2),
     updated_at: daysAgo(1, 18),
     resolved_at: daysAgo(1, 18),
   },
 
-  // ── P3 ──────────────────────────────────────────────────────────────────
+  // -- P3 -----------------------------------------------------------------
   {
     id: "INC-006",
     title: "Failed Authentication Spike - Brute Force",
@@ -157,7 +160,7 @@ const incidents: IncidentRow[] = [
     type: "unauthorized_access",
     source: "Auth Service",
     assigned_agent: "Responder",
-    cost_total: 45,
+    cost_usd: 0.0045,
     created_at: daysAgo(3),
     updated_at: daysAgo(3),
     resolved_at: daysAgo(3),
@@ -172,7 +175,7 @@ const incidents: IncidentRow[] = [
     type: "policy_violation",
     source: "Compliance Scanner",
     assigned_agent: "Chronicler",
-    cost_total: 35,
+    cost_usd: 0.0035,
     created_at: daysAgo(4),
     updated_at: daysAgo(3, 20),
     resolved_at: daysAgo(3, 20),
@@ -187,7 +190,7 @@ const incidents: IncidentRow[] = [
     type: "anomalous_traffic",
     source: "Network Monitor",
     assigned_agent: "Sherlock",
-    cost_total: 180,
+    cost_usd: 0.018,
     created_at: hoursAgo(8),
     updated_at: hoursAgo(3),
     resolved_at: null,
@@ -202,7 +205,7 @@ const incidents: IncidentRow[] = [
     type: "unauthorized_access",
     source: "IDS Alert",
     assigned_agent: "Responder",
-    cost_total: 95,
+    cost_usd: 0.0095,
     created_at: hoursAgo(4),
     updated_at: hoursAgo(1),
     resolved_at: null,
@@ -217,13 +220,13 @@ const incidents: IncidentRow[] = [
     type: "policy_violation",
     source: "Terraform Drift Detection",
     assigned_agent: "Chronicler",
-    cost_total: 20,
+    cost_usd: 0.002,
     created_at: daysAgo(5),
     updated_at: daysAgo(4),
     resolved_at: daysAgo(4),
   },
 
-  // ── P4 ──────────────────────────────────────────────────────────────────
+  // -- P4 -----------------------------------------------------------------
   {
     id: "INC-011",
     title: "CVE-2026-8234 - Critical OpenSSL Vulnerability",
@@ -234,7 +237,7 @@ const incidents: IncidentRow[] = [
     type: "other",
     source: "NVD Feed",
     assigned_agent: null,
-    cost_total: 5,
+    cost_usd: 0.0005,
     created_at: hoursAgo(1),
     updated_at: hoursAgo(1),
     resolved_at: null,
@@ -249,7 +252,7 @@ const incidents: IncidentRow[] = [
     type: "other",
     source: "IDS",
     assigned_agent: "Responder",
-    cost_total: 8,
+    cost_usd: 0.0008,
     created_at: daysAgo(2),
     updated_at: daysAgo(2),
     resolved_at: daysAgo(2),
@@ -264,7 +267,7 @@ const incidents: IncidentRow[] = [
     type: "other",
     source: "Certificate Monitor",
     assigned_agent: null,
-    cost_total: 2,
+    cost_usd: 0.0002,
     created_at: daysAgo(1),
     updated_at: daysAgo(1),
     resolved_at: null,
@@ -279,7 +282,7 @@ const incidents: IncidentRow[] = [
     type: "policy_violation",
     source: "IAM Audit",
     assigned_agent: "Responder",
-    cost_total: 10,
+    cost_usd: 0.001,
     created_at: daysAgo(6),
     updated_at: daysAgo(5),
     resolved_at: daysAgo(5),
@@ -294,7 +297,7 @@ const incidents: IncidentRow[] = [
     type: "other",
     source: "Dependency Scanner",
     assigned_agent: "Chronicler",
-    cost_total: 5,
+    cost_usd: 0.0005,
     created_at: daysAgo(7),
     updated_at: daysAgo(6),
     resolved_at: daysAgo(6),
@@ -302,45 +305,45 @@ const incidents: IncidentRow[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Evidence (first 8 incidents that have evidence in mock data)
+// Evidence
 // ---------------------------------------------------------------------------
 
 const evidence: EvidenceRow[] = [
   // INC-001
-  { id: "e1",  incident_id: "INC-001", type: "ip",   value: "185.220.101.34",                            source: "AbuseIPDB",        threat_score: 95,   added_at: hoursAgo(1) },
-  { id: "e2",  incident_id: "INC-001", type: "log",  value: "SELECT * FROM users WHERE 1=1 -- 47 rows affected", source: "PostgreSQL Audit", threat_score: null, added_at: hoursAgo(1) },
-  { id: "e3",  incident_id: "INC-001", type: "hash", value: "a3f2b8c1d4e5f6789012345678abcdef",          source: "VirusTotal",       threat_score: 78,   added_at: minutesAgo(45) },
+  { id: "e1",  incident_id: "INC-001", type: "ip",   content: "185.220.101.34",                            source: "AbuseIPDB",        collected_by: "Sherlock",  threat_score: 95,   created_at: hoursAgo(1) },
+  { id: "e2",  incident_id: "INC-001", type: "log",  content: "SELECT * FROM users WHERE 1=1 -- 47 rows affected", source: "PostgreSQL Audit", collected_by: "Sherlock", threat_score: null, created_at: hoursAgo(1) },
+  { id: "e3",  incident_id: "INC-001", type: "hash", content: "a3f2b8c1d4e5f6789012345678abcdef",          source: "VirusTotal",       collected_by: "Sherlock",  threat_score: 78,   created_at: minutesAgo(45) },
 
   // INC-002
-  { id: "e4",  incident_id: "INC-002", type: "hash", value: "b7d94c5e8f2a13467890bcdef1234567",          source: "VirusTotal",       threat_score: 99,   added_at: hoursAgo(4) },
-  { id: "e5",  incident_id: "INC-002", type: "file", value: "/var/data/customer_records.db.encrypted",   source: "File Monitor",     threat_score: null, added_at: hoursAgo(4) },
-  { id: "e6",  incident_id: "INC-002", type: "ip",   value: "91.215.85.142",                             source: "AbuseIPDB",        threat_score: 100,  added_at: hoursAgo(3) },
+  { id: "e4",  incident_id: "INC-002", type: "hash", content: "b7d94c5e8f2a13467890bcdef1234567",          source: "VirusTotal",       collected_by: "Sherlock",  threat_score: 99,   created_at: hoursAgo(4) },
+  { id: "e5",  incident_id: "INC-002", type: "file", content: "/var/data/customer_records.db.encrypted",   source: "File Monitor",     collected_by: "Sherlock",  threat_score: null, created_at: hoursAgo(4) },
+  { id: "e6",  incident_id: "INC-002", type: "ip",   content: "91.215.85.142",                             source: "AbuseIPDB",        collected_by: "Sherlock",  threat_score: 100,  created_at: hoursAgo(3) },
 
   // INC-003
-  { id: "e7",  incident_id: "INC-003", type: "email",  value: "security-update@g00gle-auth.com",         source: "Email Gateway",    threat_score: 92,   added_at: daysAgo(1) },
-  { id: "e8",  incident_id: "INC-003", type: "domain", value: "g00gle-auth.com",                         source: "VirusTotal",       threat_score: 88,   added_at: daysAgo(1) },
-  { id: "e9",  incident_id: "INC-003", type: "url",    value: "https://g00gle-auth.com/verify?token=malicious", source: "URL Scanner", threat_score: 95, added_at: daysAgo(1) },
+  { id: "e7",  incident_id: "INC-003", type: "email",  content: "security-update@g00gle-auth.com",         source: "Email Gateway",    collected_by: "Sentinel",  threat_score: 92,   created_at: daysAgo(1) },
+  { id: "e8",  incident_id: "INC-003", type: "domain", content: "g00gle-auth.com",                         source: "VirusTotal",       collected_by: "Sherlock",  threat_score: 88,   created_at: daysAgo(1) },
+  { id: "e9",  incident_id: "INC-003", type: "url",    content: "https://g00gle-auth.com/verify?token=malicious", source: "URL Scanner", collected_by: "Sherlock", threat_score: 95, created_at: daysAgo(1) },
 
   // INC-004
-  { id: "e10", incident_id: "INC-004", type: "file", value: "src/middleware/auth.ts:47 - if(token === 'BACKDOOR_2026')", source: "GitHub",    threat_score: null, added_at: hoursAgo(5) },
-  { id: "e11", incident_id: "INC-004", type: "log",  value: "Commit a8f3c2d by user: dev-contractor-7",                  source: "Git Audit", threat_score: null, added_at: hoursAgo(5) },
+  { id: "e10", incident_id: "INC-004", type: "file", content: "src/middleware/auth.ts:47 - if(token === 'BACKDOOR_2026')", source: "GitHub",    collected_by: "Sherlock", threat_score: null, created_at: hoursAgo(5) },
+  { id: "e11", incident_id: "INC-004", type: "log",  content: "Commit a8f3c2d by user: dev-contractor-7",                  source: "Git Audit", collected_by: "Sherlock", threat_score: null, created_at: hoursAgo(5) },
 
   // INC-005
-  { id: "e12", incident_id: "INC-005", type: "ip",  value: "45.33.32.156 (+22 IPs)",                                     source: "AbuseIPDB",  threat_score: 87,   added_at: daysAgo(2) },
-  { id: "e13", incident_id: "INC-005", type: "log", value: "Peak: 45,232 req/s | Normal: 4,200 req/s | 10.8x increase",  source: "Prometheus", threat_score: null, added_at: daysAgo(2) },
+  { id: "e12", incident_id: "INC-005", type: "ip",  content: "45.33.32.156 (+22 IPs)",                                     source: "AbuseIPDB",  collected_by: "Sherlock",  threat_score: 87,   created_at: daysAgo(2) },
+  { id: "e13", incident_id: "INC-005", type: "log", content: "Peak: 45,232 req/s | Normal: 4,200 req/s | 10.8x increase",  source: "Prometheus", collected_by: "Sherlock",  threat_score: null, created_at: daysAgo(2) },
 
   // INC-006
-  { id: "e14", incident_id: "INC-006", type: "ip", value: "203.0.113.42", source: "AbuseIPDB", threat_score: 72, added_at: daysAgo(3) },
+  { id: "e14", incident_id: "INC-006", type: "ip", content: "203.0.113.42", source: "AbuseIPDB", collected_by: "Sherlock", threat_score: 72, created_at: daysAgo(3) },
 
   // INC-008
-  { id: "e15", incident_id: "INC-008", type: "ip",     value: "104.21.53.78",          source: "AbuseIPDB",  threat_score: 15, added_at: hoursAgo(7) },
-  { id: "e16", incident_id: "INC-008", type: "domain", value: "cdn-static-assets.xyz", source: "VirusTotal", threat_score: 42, added_at: hoursAgo(6) },
+  { id: "e15", incident_id: "INC-008", type: "ip",     content: "104.21.53.78",          source: "AbuseIPDB",  collected_by: "Sherlock",  threat_score: 15, created_at: hoursAgo(7) },
+  { id: "e16", incident_id: "INC-008", type: "domain", content: "cdn-static-assets.xyz", source: "VirusTotal", collected_by: "Sherlock",  threat_score: 42, created_at: hoursAgo(6) },
 
   // INC-009
-  { id: "e17", incident_id: "INC-009", type: "ip", value: "10.0.23.117 (internal)", source: "IDS", threat_score: null, added_at: hoursAgo(3) },
+  { id: "e17", incident_id: "INC-009", type: "ip", content: "10.0.23.117 (internal)", source: "IDS", collected_by: "Sentinel", threat_score: null, created_at: hoursAgo(3) },
 
   // INC-012
-  { id: "e18", incident_id: "INC-012", type: "ip", value: "71.6.135.131", source: "AbuseIPDB", threat_score: 45, added_at: daysAgo(2) },
+  { id: "e18", incident_id: "INC-012", type: "ip", content: "71.6.135.131", source: "AbuseIPDB", collected_by: "Sentinel", threat_score: 45, created_at: daysAgo(2) },
 ];
 
 // ---------------------------------------------------------------------------
@@ -363,15 +366,15 @@ const timeline: TimelineRow[] = [
   { id: "t10", incident_id: "INC-002", agent: "Responder", action: "Playbook Executing",   details: "Ransomware Response playbook initiated. 5/8 steps complete.",                                  timestamp: minutesAgo(15), tool_used: "execute_playbook" },
 
   // INC-003
-  { id: "t11", incident_id: "INC-003", agent: "Sentinel",  action: "Alert Triaged",         details: "P2 - Phishing emails detected targeting 12 users. Prompt injection found.",                                     timestamp: daysAgo(1),     tool_used: "create_incident" },
-  { id: "t12", incident_id: "INC-003", agent: "Sherlock",  action: "Dual LLM Quarantine",   details: "Malicious payload safely analyzed via Archestra's Dual LLM quarantine. Prompt injection neutralized.",           timestamp: daysAgo(0, 23), tool_used: "check_domain" },
-  { id: "t13", incident_id: "INC-003", agent: "Responder", action: "Domain Blocked",        details: "Sender domain g00gle-auth.com blocked at email gateway and firewall.",                                           timestamp: daysAgo(0, 22), tool_used: "block_ip" },
-  { id: "t14", incident_id: "INC-003", agent: "Responder", action: "Credentials Reset",     details: "3 users who clicked link had credentials force-reset. MFA re-enrolled.",                                        timestamp: daysAgo(0, 20), tool_used: "quarantine_user" },
-  { id: "t15", incident_id: "INC-003", agent: "Chronicler", action: "Report Generated",     details: "Post-incident report filed. GDPR notification not required - no data breach confirmed.",                        timestamp: daysAgo(0, 18), tool_used: "update_incident" },
+  { id: "t11", incident_id: "INC-003", agent: "Sentinel",   action: "Alert Triaged",         details: "P2 - Phishing emails detected targeting 12 users. Prompt injection found.",                                     timestamp: daysAgo(1),     tool_used: "create_incident" },
+  { id: "t12", incident_id: "INC-003", agent: "Sherlock",   action: "Dual LLM Quarantine",   details: "Malicious payload safely analyzed via Archestra's Dual LLM quarantine. Prompt injection neutralized.",           timestamp: daysAgo(0, 23), tool_used: "check_domain" },
+  { id: "t13", incident_id: "INC-003", agent: "Responder",  action: "Domain Blocked",        details: "Sender domain g00gle-auth.com blocked at email gateway and firewall.",                                           timestamp: daysAgo(0, 22), tool_used: "block_ip" },
+  { id: "t14", incident_id: "INC-003", agent: "Responder",  action: "Credentials Reset",     details: "3 users who clicked link had credentials force-reset. MFA re-enrolled.",                                        timestamp: daysAgo(0, 20), tool_used: "quarantine_user" },
+  { id: "t15", incident_id: "INC-003", agent: "Chronicler", action: "Report Generated",      details: "Post-incident report filed. GDPR notification not required - no data breach confirmed.",                        timestamp: daysAgo(0, 18), tool_used: "update_incident" },
 
   // INC-004
-  { id: "t16", incident_id: "INC-004", agent: "Sentinel", action: "Alert Triaged",    details: "P2 - Suspicious code pattern detected in authentication module.",                                timestamp: hoursAgo(6), tool_used: "create_incident" },
-  { id: "t17", incident_id: "INC-004", agent: "Sherlock", action: "Code Analysis",     details: "Claude identified hardcoded backdoor token. Pattern matches known supply chain attack technique.", timestamp: hoursAgo(5), tool_used: "add_evidence" },
+  { id: "t16", incident_id: "INC-004", agent: "Sentinel", action: "Alert Triaged",     details: "P2 - Suspicious code pattern detected in authentication module.",                                timestamp: hoursAgo(6), tool_used: "create_incident" },
+  { id: "t17", incident_id: "INC-004", agent: "Sherlock", action: "Code Analysis",      details: "Identified hardcoded backdoor token. Pattern matches known supply chain attack technique.", timestamp: hoursAgo(5), tool_used: "add_evidence" },
   { id: "t18", incident_id: "INC-004", agent: "Sherlock", action: "User Investigation", details: "Contractor account created 2 weeks ago. Checking for other suspicious commits.",               timestamp: hoursAgo(1), tool_used: "get_incident" },
 
   // INC-005
@@ -445,7 +448,7 @@ async function seed() {
       await client.query(
         `INSERT INTO incidents
            (id, title, description, severity, status, type, source,
-            assigned_agent, cost_total, created_at, updated_at, resolved_at)
+            assigned_agent, cost_usd, created_at, updated_at, resolved_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
         [
           inc.id,
@@ -456,7 +459,7 @@ async function seed() {
           inc.type,
           inc.source,
           inc.assigned_agent,
-          inc.cost_total,
+          inc.cost_usd,
           inc.created_at,
           inc.updated_at,
           inc.resolved_at,
@@ -470,19 +473,20 @@ async function seed() {
     for (const ev of evidence) {
       await client.query(
         `INSERT INTO evidence
-           (id, incident_id, type, value, source, threat_score, added_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+           (id, incident_id, type, content, source, collected_by, threat_score, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
         [
           ev.id,
           ev.incident_id,
           ev.type,
-          ev.value,
+          ev.content,
           ev.source,
+          ev.collected_by,
           ev.threat_score,
-          ev.added_at,
+          ev.created_at,
         ]
       );
-      console.log(`  + ${ev.id} -> ${ev.incident_id} [${ev.type}] ${ev.value.slice(0, 50)}`);
+      console.log(`  + ${ev.id} -> ${ev.incident_id} [${ev.type}] ${ev.content.slice(0, 50)}`);
     }
 
     // 4. Insert timeline events

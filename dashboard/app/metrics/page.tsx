@@ -1,6 +1,7 @@
 "use client";
 
-import { costByDay, incidentsByDay, mttrByDay, agents, getStats } from "@/lib/mock-data";
+import { costByDay, incidentsByDay, mttrByDay } from "@/lib/mock-data";
+import { useAgents, useStats } from "@/lib/use-data";
 import { formatCost, cn, AGENT_COLORS, SEVERITY_COLORS } from "@/lib/utils";
 import {
   AreaChart,
@@ -21,13 +22,13 @@ import {
 } from "recharts";
 import { DollarSign, TrendingDown, Target, ShieldCheck } from "lucide-react";
 
-const stats = getStats();
-
-const pieData = agents.map((a) => ({
-  name: a.name,
-  value: a.cost_today,
-  color: AGENT_COLORS[a.id],
-}));
+const defaultPieData = [
+  { name: "Sentinel", value: 42, color: AGENT_COLORS.sentinel },
+  { name: "Sherlock", value: 1280, color: AGENT_COLORS.sherlock },
+  { name: "Responder", value: 680, color: AGENT_COLORS.responder },
+  { name: "Chronicler", value: 28, color: AGENT_COLORS.chronicler },
+  { name: "Overseer", value: 950, color: AGENT_COLORS.overseer },
+];
 
 function ChartCard({ title, children, delay }: { title: string; children: React.ReactNode; delay: number }) {
   return (
@@ -85,6 +86,14 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 };
 
 export default function MetricsPage() {
+  const { data: agents } = useAgents();
+  const { data: stats } = useStats();
+  const pieData = agents.map?.((a: { name: string; id: string; cost_today: number }) => ({
+    name: a.name,
+    value: a.cost_today,
+    color: AGENT_COLORS[a.id],
+  })) || defaultPieData;
+
   return (
     <div className="space-y-5">
       <div className="animate-in delay-1">

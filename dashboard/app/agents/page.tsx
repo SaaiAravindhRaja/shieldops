@@ -1,6 +1,6 @@
 "use client";
 
-import { agents } from "@/lib/mock-data";
+import { useAgents } from "@/lib/use-data";
 import { formatCost, formatTimeAgo, cn, AGENT_COLORS } from "@/lib/utils";
 import { Clock, DollarSign, Wrench, Activity, Zap } from "lucide-react";
 
@@ -9,6 +9,7 @@ const providerMeta: Record<string, { color: string; bg: string }> = {
 };
 
 export default function AgentsPage() {
+  const { data: agents } = useAgents();
   return (
     <div className="space-y-5">
       <div className="animate-in delay-1">

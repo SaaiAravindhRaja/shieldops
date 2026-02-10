@@ -1,6 +1,6 @@
 "use client";
 
-import { incidents, agents, getStats } from "@/lib/mock-data";
+import { useIncidents, useStats, useAgents } from "@/lib/use-data";
 import { severityConfig, statusConfig, formatTimeAgo, formatCost, cn } from "@/lib/utils";
 import type { Severity } from "@/lib/utils";
 import {
@@ -15,8 +15,6 @@ import {
   TrendingDown,
 } from "lucide-react";
 import Link from "next/link";
-
-const stats = getStats();
 
 /* ── Stat Card ──────────────────────────────────── */
 function StatCard({
@@ -108,12 +106,12 @@ function SeverityBar({ bySeverity }: { bySeverity: Record<Severity, number> }) {
 }
 
 /* ── Incident Feed ──────────────────────────────── */
-function IncidentFeed() {
+function IncidentFeed({ incidents }: { incidents: ReturnType<typeof useIncidents>["data"] }) {
   const activeIncidents = incidents
     .filter((i) => !["resolved", "closed"].includes(i.status))
     .sort((a, b) => {
-      const sev = { P1: 0, P2: 1, P3: 2, P4: 3 };
-      return sev[a.severity] - sev[b.severity];
+      const sev: Record<string, number> = { P1: 0, P2: 1, P3: 2, P4: 3 };
+      return (sev[a.severity] ?? 4) - (sev[b.severity] ?? 4);
     });
 
   return (
@@ -183,7 +181,7 @@ function IncidentFeed() {
 }
 
 /* ── Agent Strip ────────────────────────────────── */
-function AgentStrip() {
+function AgentStrip({ agents }: { agents: ReturnType<typeof useAgents>["data"] }) {
   return (
     <div className="grid grid-cols-5 gap-2">
       {agents.map((agent, i) => {
@@ -237,6 +235,10 @@ function AgentStrip() {
 
 /* ── Main Page ──────────────────────────────────── */
 export default function DashboardPage() {
+  const { data: incidents, source: incSrc } = useIncidents();
+  const { data: stats } = useStats();
+  const { data: agents } = useAgents();
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -253,12 +255,12 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="led led-green" />
+          <div className={`led ${incSrc === "db" ? "led-green" : "led-amber"}`} />
           <span
             className="text-xs font-mono font-semibold"
-            style={{ color: "#34d399" }}
+            style={{ color: incSrc === "db" ? "#34d399" : "#fbbf24" }}
           >
-            LIVE
+            {incSrc === "db" ? "LIVE" : "DEMO"}
           </span>
         </div>
       </div>
@@ -324,7 +326,7 @@ export default function DashboardPage() {
             View All <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
-        <IncidentFeed />
+        <IncidentFeed incidents={incidents} />
       </div>
 
       {/* Agent Status Strip */}
@@ -339,7 +341,7 @@ export default function DashboardPage() {
             View All <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
-        <AgentStrip />
+        <AgentStrip agents={agents} />
       </div>
     </div>
   );

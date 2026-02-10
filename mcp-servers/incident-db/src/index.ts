@@ -17,7 +17,7 @@ const pool = new Pool({
 async function initDB() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS incidents (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
       title TEXT NOT NULL,
       description TEXT NOT NULL,
       severity TEXT NOT NULL CHECK (severity IN ('P1', 'P2', 'P3', 'P4')),
@@ -32,21 +32,23 @@ async function initDB() {
     );
 
     CREATE TABLE IF NOT EXISTS evidence (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      incident_id UUID REFERENCES incidents(id) ON DELETE CASCADE,
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+      incident_id TEXT REFERENCES incidents(id) ON DELETE CASCADE,
       type TEXT NOT NULL,
       content TEXT NOT NULL,
       source TEXT NOT NULL,
       collected_by TEXT NOT NULL,
+      threat_score NUMERIC(5, 1),
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
 
     CREATE TABLE IF NOT EXISTS timeline_events (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      incident_id UUID REFERENCES incidents(id) ON DELETE CASCADE,
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+      incident_id TEXT REFERENCES incidents(id) ON DELETE CASCADE,
       agent TEXT NOT NULL,
       action TEXT NOT NULL,
       details TEXT NOT NULL,
+      tool_used TEXT,
       timestamp TIMESTAMPTZ DEFAULT NOW()
     );
 

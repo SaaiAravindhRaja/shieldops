@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { incidents } from "@/lib/mock-data";
+import { useIncident } from "@/lib/use-data";
 import { severityConfig, statusConfig, formatTimeAgo, formatCost, cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -52,7 +52,7 @@ const agentColors: Record<string, { hex: string; muted: string }> = {
 
 export default function IncidentDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const incident = incidents.find((i) => i.id === id);
+  const { data: incident } = useIncident(id);
 
   if (!incident) {
     return (

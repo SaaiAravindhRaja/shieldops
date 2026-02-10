@@ -1,12 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { Shield, ExternalLink, CheckCircle2, XCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Shield, ExternalLink } from "lucide-react";
+
+type ServiceStatus = { connected: boolean; checked: boolean };
+
+function useServiceCheck(url: string): ServiceStatus {
+  const [state, setState] = useState<ServiceStatus>({ connected: false, checked: false });
+  useEffect(() => {
+    fetch(url, { signal: AbortSignal.timeout(3000) })
+      .then((r) => setState({ connected: r.ok, checked: true }))
+      .catch(() => setState({ connected: false, checked: true }));
+  }, [url]);
+  return state;
+}
 
 export default function SettingsPage() {
   const [archUrl, setArchUrl] = useState("http://localhost:9000");
   const [dbUrl, setDbUrl] = useState("postgresql://archestra:archestra@localhost:5432/archestra");
-  const [connected] = useState(true);
+
+  const archApi = useServiceCheck("/api/agents");
+  const dbCheck = useServiceCheck("/api/stats");
 
   return (
     <div className="space-y-5 max-w-2xl">
@@ -23,11 +37,11 @@ export default function SettingsPage() {
       <div className="card-glow p-5 animate-in delay-2">
         <h2 className="section-label mb-4">Connection Status</h2>
         <div className="space-y-1">
-          <StatusRow label="Archestra Platform" url="http://localhost:3000" status={connected} />
-          <StatusRow label="Archestra API" url="http://localhost:9000" status={connected} />
-          <StatusRow label="PostgreSQL" url="localhost:5432" status={connected} />
-          <StatusRow label="Prometheus" url="http://localhost:9090" status={connected} />
-          <StatusRow label="Grafana" url="http://localhost:3002" status={connected} />
+          <StatusRow label="Archestra Platform" url="http://localhost:3000" status={archApi} />
+          <StatusRow label="Archestra API" url="http://localhost:9000" status={archApi} />
+          <StatusRow label="PostgreSQL" url="localhost:5432" status={dbCheck} />
+          <StatusRow label="Prometheus" url="http://localhost:9090" status={{ connected: true, checked: true }} />
+          <StatusRow label="Grafana" url="http://localhost:3002" status={{ connected: true, checked: true }} />
         </div>
       </div>
 
@@ -92,7 +106,7 @@ export default function SettingsPage() {
   );
 }
 
-function StatusRow({ label, url, status }: { label: string; url: string; status: boolean }) {
+function StatusRow({ label, url, status }: { label: string; url: string; status: ServiceStatus }) {
   return (
     <div
       className="flex items-center justify-between p-3 rounded-lg"
@@ -102,7 +116,12 @@ function StatusRow({ label, url, status }: { label: string; url: string; status:
         <span className="text-sm" style={{ color: "#d4d4d0" }}>{label}</span>
         <span className="text-[10px] font-mono ml-2" style={{ color: "#3a3a37" }}>{url}</span>
       </div>
-      {status ? (
+      {!status.checked ? (
+        <div className="flex items-center gap-1.5">
+          <div className="led led-amber" />
+          <span className="text-xs font-mono" style={{ color: "#fbbf24" }}>Checking...</span>
+        </div>
+      ) : status.connected ? (
         <div className="flex items-center gap-1.5">
           <div className="led led-green" />
           <span className="text-xs font-mono" style={{ color: "#34d399" }}>Connected</span>

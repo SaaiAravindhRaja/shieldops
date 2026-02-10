@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { incidents } from "@/lib/mock-data";
+import { useIncidents } from "@/lib/use-data";
 import { severityConfig, statusConfig, formatTimeAgo, formatCost, cn } from "@/lib/utils";
 import type { Severity, IncidentStatus } from "@/lib/utils";
 import { Search, Bot, ArrowRight, Filter } from "lucide-react";
 
 export default function IncidentsPage() {
+  const { data: incidents } = useIncidents();
   const [search, setSearch] = useState("");
   const [filterSeverity, setFilterSeverity] = useState<Severity | "all">("all");
   const [filterStatus, setFilterStatus] = useState<IncidentStatus | "all">("all");
