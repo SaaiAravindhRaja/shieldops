@@ -42,7 +42,11 @@ server.tool(
   "block_ip",
   "Block an IP address at the firewall/WAF level to prevent further access",
   {
-    ip: z.string().describe("IP address to block"),
+    ip: z.string().optional().describe("IP address to block"),
+    ips: z
+      .union([z.string(), z.array(z.string())])
+      .optional()
+      .describe("Multiple IPs to block"),
     reason: z.string().describe("Reason for blocking"),
     duration_hours: z
       .number()
@@ -53,10 +57,21 @@ server.tool(
       .string()
       .optional()
       .describe("Associated incident ID for audit trail"),
-  },
-  async ({ ip, reason, duration_hours, incident_id }) => {
+  }
+  .refine((data) => data.ip || data.ips, {
+    message: "Provide ip or ips",
+    path: ["ip"],
+  }),
+  async ({ ip, ips, reason, duration_hours, incident_id }) => {
+    const ipList = Array.isArray(ips)
+      ? ips
+      : typeof ips === "string"
+        ? ips.split(",").map((value) => value.trim()).filter(Boolean)
+        : ip
+          ? [ip]
+          : [];
     // Simulate firewall rule creation
-    const entry = logAction("block_ip", ip, "executed", {
+    const entry = logAction("block_ip", ipList.join(", "), "executed", {
       reason,
       duration_hours,
       incident_id,
@@ -77,8 +92,8 @@ server.tool(
             {
               success: true,
               action_type: "block_ip",
-              ip,
-              message: `IP ${ip} has been blocked for ${duration_hours === 0 ? "permanently" : `${duration_hours} hours`}`,
+              ip: ipList,
+              message: `IP${ipList.length > 1 ? "s" : ""} ${ipList.join(", ")} has been blocked for ${duration_hours === 0 ? "permanently" : `${duration_hours} hours`}`,
               audit: entry,
             },
             null,
@@ -141,6 +156,53 @@ server.tool(
               pod: `${namespace}/${pod_name}`,
               message: `Pod ${pod_name} in namespace ${namespace} has been isolated. All ingress and egress traffic blocked.`,
               network_policy_applied: networkPolicy.metadata.name,
+              audit: entry,
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  }
+);
+
+// Tool: Isolate Host
+server.tool(
+  "isolate_host",
+  "Isolate a compromised workstation or server from the network",
+  {
+    host: z.string().describe("Hostname or asset ID to isolate"),
+    reason: z.string().describe("Reason for isolation"),
+    preserve_evidence: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe("Capture forensic snapshot before isolation"),
+    incident_id: z.string().optional().describe("Associated incident ID"),
+  },
+  async ({ host, reason, preserve_evidence, incident_id }) => {
+    const entry = logAction("isolate_host", host, "executed", {
+      reason,
+      incident_id,
+      preserve_evidence,
+      actions_taken: [
+        "Network access revoked",
+        preserve_evidence ? "Forensic snapshot initiated" : "Snapshot skipped",
+        "Endpoint containment policy applied",
+      ],
+    });
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(
+            {
+              success: true,
+              action_type: "isolate_host",
+              host,
+              message: `Host ${host} has been isolated from the network`,
               audit: entry,
             },
             null,
@@ -266,6 +328,7 @@ server.tool(
         "phishing_response",
         "insider_threat",
         "compromised_credentials",
+        "supply_chain_remediation",
       ])
       .describe("Playbook to execute"),
     incident_id: z.string().describe("Associated incident ID"),
@@ -362,6 +425,19 @@ server.tool(
           "Check for privilege escalation attempts",
           "Scan for persistence mechanisms",
           "Notify user of account compromise",
+        ],
+      },
+      supply_chain_remediation: {
+        name: "Supply Chain Remediation",
+        severity: "P2",
+        steps: [
+          "Identify malicious dependency and impacted services",
+          "Purge package-lock and pin to patched version",
+          "Invalidate build caches and artifacts",
+          "Rotate CI/CD credentials and tokens",
+          "Rebuild and redeploy from clean sources",
+          "Audit dependency tree for further anomalies",
+          "Document supply chain indicators and IoCs",
         ],
       },
     };

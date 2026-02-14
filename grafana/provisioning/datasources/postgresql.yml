@@ -3,13 +3,17 @@ apiVersion: 1
 datasources:
   - name: PostgreSQL
     type: postgres
+    uid: PostgreSQL
     access: proxy
     url: postgres:5432
-    database: shieldops
-    user: shieldops
+    isDefault: true
+    database: archestra
+    user: archestra
     secureJsonData:
-      password: shieldops
+      password: archestra
     jsonData:
       sslmode: disable
       maxOpenConns: 5
-      postgresVersion: 1500
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+      postgresVersion: 1600

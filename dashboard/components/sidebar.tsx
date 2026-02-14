@@ -33,8 +33,9 @@ export function Sidebar() {
       className="fixed left-0 top-0 z-40 h-screen flex flex-col transition-all duration-200"
       style={{
         width: collapsed ? 64 : 224,
-        background: "#0a0a0b",
+        background: "rgba(10, 10, 11, 0.88)",
         borderRight: "1px solid #1a1a1e",
+        backdropFilter: "blur(12px)",
       }}
     >
       {/* Logo */}
@@ -111,9 +112,8 @@ export function Sidebar() {
       {/* System Status */}
       {!collapsed && (
         <div
-          className="mx-3 mb-3 rounded-lg p-3"
+          className="mx-3 mb-3 rounded-lg p-3 glass-strong shadow-neo"
           style={{
-            background: "#111113",
             border: "1px solid #1a1a1e",
           }}
         >

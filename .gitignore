@@ -13,4 +13,5 @@ coverage/
 .DS_Store
 *.tsbuildinfo
 CLAUDE.md
+Claude.md
 .claude/

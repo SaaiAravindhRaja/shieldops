@@ -1,8 +1,9 @@
 export interface SimToolCall {
   name: string;
   server: string;
-  params: Record<string, string>;
+  params: Record<string, string | number | boolean | string[]>;
   result: string;
+  live?: boolean;
 }
 
 export interface SimEvidence {
@@ -87,7 +88,14 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "create_incident",
           server: "incident-db",
-          params: { title: "Tor Exit Node Auth — j.martinez", severity: "P2", type: "credential_compromise", source: "siem-alert-4721" },
+          params: {
+            title: "Tor Exit Node Auth — j.martinez",
+            description: "Authentication attempts from Tor exit nodes targeting VPN gateway.",
+            severity: "P2",
+            type: "unauthorized_access",
+            source: "siem-alert-4721",
+            assigned_agent: "Sentinel",
+          },
           result: "Created INC-2026-0042",
         },
         details: "",
@@ -151,7 +159,7 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "bulk_check_ips",
           server: "threat-intel",
-          params: { ips: "198.51.100.23, 203.0.113.45, 203.0.113.78, 198.51.100.89" },
+          params: { ips: ["198.51.100.23", "203.0.113.45", "203.0.113.78", "198.51.100.89"] },
           result: "4/4 confirmed malicious. All Tor exit nodes. Same /24 campaign cluster. First activity: 6h ago. Credential stuffing pattern detected.",
         },
         evidence: { type: "ip", value: "4 correlated Tor exit nodes identified", threatScore: 95 },
@@ -169,7 +177,7 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "update_incident",
           server: "incident-db",
-          params: { id: "INC-2026-0042", severity: "P1", status: "investigating" },
+          params: { id: "{{incident_id}}", severity: "P1", status: "investigating", details: "Escalated to P1 after coordinated Tor credential stuffing confirmed." },
           result: "Severity escalated to P1 (Critical)",
         },
         stage: "investigate",
@@ -183,7 +191,14 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "add_evidence",
           server: "incident-db",
-          params: { incident_id: "INC-2026-0042", type: "ip", value: "198.51.100.23, 203.0.113.45, 203.0.113.78, 198.51.100.89" },
+          params: {
+            incident_id: "{{incident_id}}",
+            type: "ip",
+            content: "198.51.100.23, 203.0.113.45, 203.0.113.78, 198.51.100.89",
+            source: "AbuseIPDB",
+            collected_by: "Sherlock",
+            threat_score: 95,
+          },
           result: "4 evidence items attached to INC-2026-0042",
         },
         details: "",
@@ -225,7 +240,12 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "block_ip",
           server: "security-playbook",
-          params: { ips: "198.51.100.23, 203.0.113.45, 203.0.113.78, 198.51.100.89", duration: "72h" },
+          params: {
+            ips: ["198.51.100.23", "203.0.113.45", "203.0.113.78", "198.51.100.89"],
+            reason: "Coordinated Tor credential stuffing campaign",
+            duration_hours: 72,
+            incident_id: "{{incident_id}}",
+          },
           result: "4 IPs blocked at perimeter firewall. TTL: 72h. Rule ID: FW-2026-1847.",
         },
         details: "",
@@ -240,7 +260,12 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "revoke_token",
           server: "security-playbook",
-          params: { user: "j.martinez@corp.com", scope: "all_sessions" },
+          params: {
+            token_type: "session",
+            identifier: "j.martinez@corp.com",
+            reason: "Credential stuffing confirmed via Tor exit nodes",
+            incident_id: "{{incident_id}}",
+          },
           result: "All active sessions revoked. Password reset enforced. User notified via secondary channel.",
         },
         details: "",
@@ -282,7 +307,12 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "update_incident",
           server: "incident-db",
-          params: { id: "INC-2026-0042", status: "closed", resolution: "Coordinated credential attack contained" },
+          params: {
+            id: "{{incident_id}}",
+            status: "closed",
+            details: "Coordinated credential attack contained. Sessions revoked and IPs blocked.",
+            cost_usd: 0.38,
+          },
           result: "INC-2026-0042 closed. MTTR: 4m 12s. Cost: $0.38.",
         },
         details: "",
@@ -343,7 +373,14 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "create_incident",
           server: "incident-db",
-          params: { title: "Suspicious npm package hash — colors-js", severity: "P2", type: "malware", source: "ci-pipeline-alert" },
+          params: {
+            title: "Suspicious npm package hash — colors-js",
+            description: "CI pipeline flagged malicious hash in dependency tree (colors-js@1.4.1).",
+            severity: "P2",
+            type: "malware",
+            source: "ci-pipeline-alert",
+            assigned_agent: "Sentinel",
+          },
           result: "Created INC-2026-0043",
         },
         details: "",
@@ -383,7 +420,7 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "check_cve",
           server: "threat-intel",
-          params: { package: "colors-js", version: "1.4.1" },
+          params: { cve_id: "CVE-2026-0891" },
           result: "CVE-2026-0891 (CVSS 9.8). Prototype pollution leading to arbitrary code execution. Published 2026-02-06. Patched in 1.4.2.",
         },
         evidence: { type: "hash", value: "CVE-2026-0891 (CVSS 9.8)", threatScore: 98 },
@@ -417,7 +454,12 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "isolate_host",
           server: "security-playbook",
-          params: { host: "staging-build-07", reason: "INC-2026-0043 malicious dependency" },
+          params: {
+            host: "staging-build-07",
+            reason: "Malicious dependency detected in CI pipeline",
+            preserve_evidence: true,
+            incident_id: "{{incident_id}}",
+          },
           result: "Build server isolated. Network access revoked. Running processes snapshot captured.",
         },
         details: "",
@@ -432,7 +474,11 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "execute_playbook",
           server: "security-playbook",
-          params: { playbook: "supply-chain-remediation", target: "colors-js@1.4.1" },
+          params: {
+            playbook: "supply_chain_remediation",
+            target: "colors-js@1.4.1",
+            incident_id: "{{incident_id}}",
+          },
           result: "Playbook executed: package-lock purged, dependency pinned to 1.4.2, npm cache cleared across all build nodes, staging deployments rolled back.",
         },
         details: "",
@@ -447,7 +493,12 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "revoke_token",
           server: "security-playbook",
-          params: { user: "ci-service-account", scope: "npm_tokens,aws_keys" },
+          params: {
+            token_type: "service_account",
+            identifier: "ci-service-account",
+            reason: "Supply chain compromise containment",
+            incident_id: "{{incident_id}}",
+          },
           result: "CI service account tokens rotated. AWS keys regenerated. NPM publish token revoked and reissued.",
         },
         details: "",
@@ -480,7 +531,12 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "update_incident",
           server: "incident-db",
-          params: { id: "INC-2026-0043", status: "closed", resolution: "Malicious npm package contained, credentials rotated" },
+          params: {
+            id: "{{incident_id}}",
+            status: "closed",
+            details: "Malicious npm package contained, credentials rotated, staging rebuilt.",
+            cost_usd: 0.27,
+          },
           result: "INC-2026-0043 closed. MTTR: 3m 48s. Cost: $0.27.",
         },
         details: "",
@@ -541,7 +597,14 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "create_incident",
           server: "incident-db",
-          params: { title: "DNS Tunnel Exfiltration — WS-FIN-042", severity: "P2", type: "data_breach", source: "network-monitor" },
+          params: {
+            title: "DNS Tunnel Exfiltration — WS-FIN-042",
+            description: "Anomalous DNS query volume with base64 subdomains indicates possible data exfiltration.",
+            severity: "P2",
+            type: "data_breach",
+            source: "network-monitor",
+            assigned_agent: "Sentinel",
+          },
           result: "Created INC-2026-0044",
         },
         details: "",
@@ -600,7 +663,7 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "update_incident",
           server: "incident-db",
-          params: { id: "INC-2026-0044", severity: "P1", status: "investigating" },
+          params: { id: "{{incident_id}}", severity: "P1", status: "investigating", details: "Confirmed DNS exfiltration. Escalated to P1." },
           result: "Severity escalated to P1 (Critical)",
         },
         stage: "investigate",
@@ -632,7 +695,12 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "isolate_host",
           server: "security-playbook",
-          params: { host: "WS-FIN-042", reason: "INC-2026-0044 active DNS exfiltration", preserve_evidence: "true" },
+          params: {
+            host: "WS-FIN-042",
+            reason: "Active DNS exfiltration detected",
+            preserve_evidence: true,
+            incident_id: "{{incident_id}}",
+          },
           result: "Workstation isolated from network. DNS traffic blocked. Memory dump initiated for forensic analysis.",
         },
         details: "",
@@ -647,7 +715,12 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "block_ip",
           server: "security-playbook",
-          params: { ips: "45.95.147.12", domain: "ext-analytics.xyz", duration: "permanent" },
+          params: {
+            ip: "45.95.147.12",
+            reason: "DNS tunneling C2 infrastructure",
+            duration_hours: 0,
+            incident_id: "{{incident_id}}",
+          },
           result: "C2 IP and domain blocked at DNS resolver and firewall. Sinkhole configured.",
         },
         details: "",
@@ -662,7 +735,12 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "revoke_token",
           server: "security-playbook",
-          params: { user: "a.chen@corp.com", scope: "all_sessions,api_keys,vpn" },
+          params: {
+            token_type: "session",
+            identifier: "a.chen@corp.com",
+            reason: "Account associated with DNS exfiltration host",
+            incident_id: "{{incident_id}}",
+          },
           result: "All access revoked for a.chen. Account flagged for security review. Manager notified.",
         },
         details: "",
@@ -695,7 +773,12 @@ export const scenarios: Scenario[] = [
         toolCall: {
           name: "update_incident",
           server: "incident-db",
-          params: { id: "INC-2026-0044", status: "closed", resolution: "DNS exfiltration contained, forensic analysis ongoing" },
+          params: {
+            id: "{{incident_id}}",
+            status: "closed",
+            details: "DNS exfiltration contained; forensic analysis ongoing. GDPR notification pending.",
+            cost_usd: 0.41,
+          },
           result: "INC-2026-0044 closed. MTTR: 3m 54s. Cost: $0.41. Note: GDPR notification pending forensic results.",
         },
         details: "",

@@ -2,7 +2,7 @@
 
 import { useAgents } from "@/lib/use-data";
 import { formatCost, formatTimeAgo, cn, AGENT_COLORS } from "@/lib/utils";
-import { Clock, DollarSign, Wrench, Activity, Zap, Lock, ShieldCheck } from "lucide-react";
+import { Clock, DollarSign, Wrench, Activity, Zap, Lock, ShieldCheck, TrendingUp } from "lucide-react";
 
 const providerMeta: Record<string, { color: string; bg: string }> = {
   Google: { color: "#34d399", bg: "rgba(52,211,153,0.08)" },
@@ -10,15 +10,75 @@ const providerMeta: Record<string, { color: string; bg: string }> = {
 
 export default function AgentsPage() {
   const { data: agents } = useAgents();
+  const totalCost = agents.reduce((sum, a) => sum + a.cost_today, 0);
+  const avgSpeed = agents.length
+    ? Math.round(agents.reduce((sum, a) => sum + a.avg_response_sec, 0) / agents.length)
+    : 0;
+  const busiest = agents.length
+    ? agents.reduce((best, a) => (a.incidents_handled > best.incidents_handled ? a : best), agents[0])
+    : null;
+  const budgetPct = agents.length
+    ? Math.round(
+        (agents.reduce((sum, a) => sum + a.cost_today, 0) /
+          agents.reduce((sum, a) => sum + a.cost_limit, 0)) *
+          100
+      )
+    : 0;
   return (
     <div className="space-y-5">
       <div className="animate-in delay-1">
-        <h1 className="text-xl font-bold tracking-tight" style={{ color: "#fafaf9" }}>
+        <h1 className="text-xl font-bold tracking-tight text-gradient">
           Agent Monitoring
         </h1>
         <p className="text-sm mt-0.5" style={{ color: "#5c5c58" }}>
           5 specialized AI agents powered by Archestra
         </p>
+      </div>
+
+      {/* Fleet Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 animate-in delay-2">
+        <div className="card-glow card-spotlight p-4 hover-lift" style={{ borderLeft: "3px solid #34d399" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <Activity className="h-4 w-4" style={{ color: "#34d399" }} />
+            <span className="section-label">Fleet Health</span>
+          </div>
+          <div className="text-2xl font-mono font-bold" style={{ color: "#fafaf9" }}>
+            {agents.filter((a) => a.status !== "offline").length}/{agents.length}
+          </div>
+          <div className="text-[10px]" style={{ color: "#3a3a37" }}>agents online</div>
+        </div>
+        <div className="card-glow card-spotlight p-4 hover-lift" style={{ borderLeft: "3px solid #60a5fa" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <Zap className="h-4 w-4" style={{ color: "#60a5fa" }} />
+            <span className="section-label">Avg Speed</span>
+          </div>
+          <div className="text-2xl font-mono font-bold" style={{ color: "#fafaf9" }}>
+            {avgSpeed}s
+          </div>
+          <div className="text-[10px]" style={{ color: "#3a3a37" }}>response time</div>
+        </div>
+        <div className="card-glow card-spotlight p-4 hover-lift" style={{ borderLeft: "3px solid #fbbf24" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <DollarSign className="h-4 w-4" style={{ color: "#fbbf24" }} />
+            <span className="section-label">Cost Today</span>
+          </div>
+          <div className="text-2xl font-mono font-bold" style={{ color: "#fafaf9" }}>
+            {formatCost(totalCost)}
+          </div>
+          <div className="text-[10px]" style={{ color: "#3a3a37" }}>across all agents</div>
+        </div>
+        <div className="card-glow card-spotlight p-4 hover-lift" style={{ borderLeft: "3px solid #fb923c" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <TrendingUp className="h-4 w-4" style={{ color: "#fb923c" }} />
+            <span className="section-label">Budget Burn</span>
+          </div>
+          <div className="text-2xl font-mono font-bold" style={{ color: "#fafaf9" }}>
+            {budgetPct}%
+          </div>
+          <div className="text-[10px]" style={{ color: "#3a3a37" }}>
+            busiest: {busiest?.name ?? "—"}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -34,7 +94,7 @@ export default function AgentsPage() {
           return (
             <div
               key={agent.id}
-              className={cn("card-glow p-5 animate-in", `delay-${Math.min(i + 2, 8)}`)}
+              className={cn("card-glow card-spotlight p-5 animate-in hover-lift hover-glow", `delay-${Math.min(i + 2, 8)}`)}
               style={{ borderLeft: `3px solid ${agentColor}` }}
             >
               {/* Header */}
@@ -171,7 +231,7 @@ export default function AgentsPage() {
       </div>
 
       {/* Archestra Tool Policy Matrix */}
-      <div className="card-glow p-5 animate-in delay-6">
+      <div className="card-glow card-spotlight glass-strong shadow-neo p-5 animate-in delay-6">
         <div className="flex items-center gap-2 mb-1">
           <Lock className="h-4 w-4" style={{ color: "#c084fc" }} />
           <h2 className="text-sm font-bold" style={{ color: "#fafaf9" }}>
@@ -207,6 +267,7 @@ const POLICY_TOOLS = [
   { name: "bulk_check_ips", server: "threat-intel" },
   { name: "block_ip", server: "security-playbook" },
   { name: "isolate_pod", server: "security-playbook" },
+  { name: "isolate_host", server: "security-playbook" },
   { name: "revoke_token", server: "security-playbook" },
   { name: "quarantine_user", server: "security-playbook" },
   { name: "execute_playbook", server: "security-playbook" },
@@ -216,7 +277,7 @@ const POLICY_TOOLS = [
 const POLICY_MAP: Record<string, string[]> = {
   Sentinel: ["create_incident", "list_incidents", "get_incident_stats"],
   Sherlock: ["check_ip", "check_hash", "check_domain", "check_cve", "bulk_check_ips", "get_incident", "add_evidence", "update_incident"],
-  Responder: ["block_ip", "isolate_pod", "revoke_token", "quarantine_user", "execute_playbook", "get_action_log", "update_incident", "add_evidence"],
+  Responder: ["block_ip", "isolate_pod", "isolate_host", "revoke_token", "quarantine_user", "execute_playbook", "get_action_log", "update_incident", "add_evidence"],
   Chronicler: ["get_incident", "update_incident", "add_evidence", "get_incident_stats"],
   Overseer: POLICY_TOOLS.map(t => t.name),
 };

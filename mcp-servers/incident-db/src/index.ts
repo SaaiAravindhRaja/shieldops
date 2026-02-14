@@ -16,6 +16,8 @@ const pool = new Pool({
 // Ensure tables exist
 async function initDB() {
   await pool.query(`
+    CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
     CREATE TABLE IF NOT EXISTS incidents (
       id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
       title TEXT NOT NULL,
@@ -132,7 +134,7 @@ server.tool(
   "update_incident",
   "Update an existing security incident",
   {
-    id: z.string().uuid().describe("Incident UUID"),
+    id: z.string().describe("Incident ID"),
     status: z
       .enum([
         "open",
@@ -223,7 +225,7 @@ server.tool(
   "get_incident",
   "Get full details of a security incident including evidence and timeline",
   {
-    id: z.string().uuid().describe("Incident UUID"),
+    id: z.string().describe("Incident ID"),
   },
   async ({ id }) => {
     const incidentResult = await pool.query(
@@ -337,7 +339,7 @@ server.tool(
   "add_evidence",
   "Add evidence to a security incident",
   {
-    incident_id: z.string().uuid().describe("Incident UUID"),
+    incident_id: z.string().describe("Incident ID"),
     type: z
       .string()
       .describe(

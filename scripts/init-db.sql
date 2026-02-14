@@ -1,6 +1,9 @@
 -- ShieldOps Database Initialization
 -- This runs automatically when PostgreSQL starts via docker-compose
 
+-- Enable UUID generation (used by default IDs)
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- Create the shieldops schema tables
 CREATE TABLE IF NOT EXISTS incidents (
   id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,

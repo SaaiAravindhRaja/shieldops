@@ -5,25 +5,41 @@ import Link from "next/link";
 import { useIncidents } from "@/lib/use-data";
 import { severityConfig, statusConfig, formatTimeAgo, formatCost, cn } from "@/lib/utils";
 import type { Severity, IncidentStatus } from "@/lib/utils";
-import { Search, Bot, ArrowRight, Filter } from "lucide-react";
+import { Search, Bot, ArrowRight, Filter, SortDesc } from "lucide-react";
 
 export default function IncidentsPage() {
   const { data: incidents } = useIncidents();
   const [search, setSearch] = useState("");
   const [filterSeverity, setFilterSeverity] = useState<Severity | "all">("all");
   const [filterStatus, setFilterStatus] = useState<IncidentStatus | "all">("all");
+  const [view, setView] = useState<"active" | "resolved" | "all">("active");
+  const [sortBy, setSortBy] = useState<"severity" | "recent">("severity");
 
   const filtered = incidents.filter((inc) => {
+    if (view === "active" && ["resolved", "closed"].includes(inc.status)) return false;
+    if (view === "resolved" && !["resolved", "closed"].includes(inc.status)) return false;
     if (filterSeverity !== "all" && inc.severity !== filterSeverity) return false;
     if (filterStatus !== "all" && inc.status !== filterStatus) return false;
     if (search && !inc.title.toLowerCase().includes(search.toLowerCase()) && !inc.id.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
+  const severityOrder: Record<string, number> = { P1: 0, P2: 1, P3: 2, P4: 3 };
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === "severity") {
+      const s = (severityOrder[a.severity] ?? 4) - (severityOrder[b.severity] ?? 4);
+      if (s !== 0) return s;
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const activeCount = incidents.filter((i) => !["resolved", "closed"].includes(i.status)).length;
+  const resolvedCount = incidents.filter((i) => ["resolved", "closed"].includes(i.status)).length;
+
   return (
     <div className="space-y-5">
       <div className="animate-in delay-1">
-        <h1 className="text-xl font-bold tracking-tight" style={{ color: "#fafaf9" }}>
+        <h1 className="text-xl font-bold tracking-tight text-gradient">
           Incidents
         </h1>
         <p className="text-sm mt-0.5" style={{ color: "#5c5c58" }}>
@@ -32,48 +48,80 @@ export default function IncidentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3 animate-in delay-2">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#3a3a37" }} />
-          <input
-            type="text"
-            placeholder="Search incidents..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input pl-9"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4" style={{ color: "#3a3a37" }} />
-          <select
-            value={filterSeverity}
-            onChange={(e) => setFilterSeverity(e.target.value as Severity | "all")}
-          >
-            <option value="all">All Severity</option>
-            <option value="P1">P1 - Critical</option>
-            <option value="P2">P2 - High</option>
-            <option value="P3">P3 - Medium</option>
-            <option value="P4">P4 - Low</option>
-          </select>
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as IncidentStatus | "all")}
-          >
-            <option value="all">All Status</option>
-            <option value="open">Open</option>
-            <option value="triaging">Triaging</option>
-            <option value="investigating">Investigating</option>
-            <option value="responding">Responding</option>
-            <option value="resolved">Resolved</option>
-            <option value="closed">Closed</option>
-          </select>
+      <div className="card-glow glass-strong shadow-neo p-3 animate-in delay-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1">
+            {([
+              { key: "active", label: `Active (${activeCount})` },
+              { key: "resolved", label: `Resolved (${resolvedCount})` },
+              { key: "all", label: "All" },
+            ] as const).map((v) => (
+              <button
+                key={v.key}
+                onClick={() => setView(v.key)}
+                className="px-3 py-1.5 rounded-full text-[11px] font-mono transition-all hover-lift"
+                style={{
+                  background: view === v.key ? "#252529" : "transparent",
+                  color: view === v.key ? "#fafaf9" : "#3a3a37",
+                  border: view === v.key ? "1px solid #34d399" : "1px solid #252529",
+                }}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#3a3a37" }} />
+            <input
+              type="text"
+              placeholder="Search incidents..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input pl-9"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4" style={{ color: "#3a3a37" }} />
+            <select
+              value={filterSeverity}
+              onChange={(e) => setFilterSeverity(e.target.value as Severity | "all")}
+            >
+              <option value="all">All Severity</option>
+              <option value="P1">P1 - Critical</option>
+              <option value="P2">P2 - High</option>
+              <option value="P3">P3 - Medium</option>
+              <option value="P4">P4 - Low</option>
+            </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as IncidentStatus | "all")}
+            >
+              <option value="all">All Status</option>
+              <option value="open">Open</option>
+              <option value="triaging">Triaging</option>
+              <option value="investigating">Investigating</option>
+              <option value="responding">Responding</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+            <div className="flex items-center gap-1">
+              <SortDesc className="h-4 w-4" style={{ color: "#3a3a37" }} />
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as "severity" | "recent")}
+              >
+                <option value="severity">Sort: Severity</option>
+                <option value="recent">Sort: Recent</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Table Header */}
       <div className="animate-in delay-3">
         <div
-          className="flex items-center gap-4 px-4 py-2 text-[10px] font-mono font-semibold uppercase tracking-wider"
+          className="flex items-center gap-4 px-4 py-2 text-[10px] font-mono font-semibold uppercase tracking-wider glass-strong"
           style={{ color: "#3a3a37", borderBottom: "1px solid #1a1a1e" }}
         >
           <span className="w-12">SEV</span>
@@ -91,14 +139,14 @@ export default function IncidentsPage() {
           className="rounded-b-lg overflow-hidden"
           style={{ border: "1px solid #1a1a1e", borderTop: "none" }}
         >
-          {filtered.map((incident, i) => {
+          {sorted.map((incident, i) => {
             const sev = severityConfig[incident.severity];
             const status = statusConfig[incident.status];
             return (
               <Link
                 key={incident.id}
                 href={`/incidents/${incident.id}`}
-                className="table-row group"
+                className="table-row group hover-lift card-spotlight"
                 style={{
                   borderLeft: `3px solid ${sev.hex}`,
                   background: i % 2 === 0 ? "#111113" : "#0e0e10",
@@ -178,7 +226,7 @@ export default function IncidentsPage() {
           })}
         </div>
 
-        {filtered.length === 0 && (
+        {sorted.length === 0 && (
           <div className="card-glow p-12 text-center">
             <p style={{ color: "#3a3a37" }}>No incidents match your filters.</p>
           </div>

@@ -132,3 +132,46 @@ export const AGENT_COLORS: Record<string, string> = {
   chronicler: "#60a5fa",
   overseer: "#a78bfa",
 };
+
+/* ── Integrity Hash (Tamper-Evident Demo) ───────────────── */
+export function hashString(input: string): string {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+export function computeIncidentIntegrity(incident: {
+  evidence?: Array<{ type: string; value?: string; content?: string; source?: string; threat_score?: number | null; added_at?: string; created_at?: string }>;
+  timeline?: Array<{ agent?: string; action?: string; details?: string; timestamp?: string; tool_used?: string | null }>;
+}) {
+  const timeline = [...(incident.timeline || [])].sort((a, b) => {
+    const ta = new Date(a.timestamp || 0).getTime();
+    const tb = new Date(b.timestamp || 0).getTime();
+    return ta - tb;
+  });
+
+  let timelineHash = "genesis";
+  for (const event of timeline) {
+    timelineHash = hashString(
+      `${timelineHash}|${event.agent || ""}|${event.action || ""}|${event.details || ""}|${event.timestamp || ""}|${event.tool_used || ""}`
+    );
+  }
+
+  const evidence = [...(incident.evidence || [])].sort((a, b) => {
+    const ta = new Date(a.added_at || a.created_at || 0).getTime();
+    const tb = new Date(b.added_at || b.created_at || 0).getTime();
+    return ta - tb;
+  });
+
+  let evidenceHash = "evidence";
+  for (const ev of evidence) {
+    evidenceHash = hashString(
+      `${evidenceHash}|${ev.type}|${ev.value || ev.content || ""}|${ev.source || ""}|${ev.threat_score ?? ""}|${ev.added_at || ev.created_at || ""}`
+    );
+  }
+
+  return { timelineHash, evidenceHash };
+}

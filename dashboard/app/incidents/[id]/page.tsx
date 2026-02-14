@@ -3,7 +3,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { useIncident } from "@/lib/use-data";
-import { severityConfig, statusConfig, formatTimeAgo, formatCost, cn } from "@/lib/utils";
+import { severityConfig, statusConfig, formatTimeAgo, formatCost, cn, computeIncidentIntegrity } from "@/lib/utils";
 import {
   ArrowLeft,
   Bot,
@@ -70,6 +70,7 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
 
   const sev = severityConfig[incident.severity];
   const status = statusConfig[incident.status];
+  const integrity = computeIncidentIntegrity(incident);
 
   return (
     <div className="space-y-5">
@@ -84,7 +85,7 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
           Back to Incidents
         </Link>
 
-        <div className="card-glow p-6" style={{ borderLeft: `3px solid ${sev.hex}` }}>
+        <div className="card-glow card-spotlight shadow-neo hover-glow p-6 panel-hero" style={{ borderLeft: `3px solid ${sev.hex}` }}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
@@ -154,7 +155,7 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
                       <AgentIcon className="h-3.5 w-3.5" style={{ color: colors.hex }} />
                     </div>
 
-                    <div className="card-glow p-4">
+                    <div className="card-glow card-spotlight p-4 hover-lift">
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold" style={{ color: colors.hex }}>
@@ -197,7 +198,7 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
               {incident.evidence.map((ev) => {
                 const EvidenceIcon = evidenceIcons[ev.type] || FileText;
                 return (
-                  <div key={ev.id} className="card-glow p-4">
+                  <div key={ev.id} className="card-glow card-spotlight p-4 hover-lift">
                     <div className="flex items-start gap-3">
                       <div
                         className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
@@ -255,6 +256,31 @@ export default function IncidentDetailPage({ params }: { params: Promise<{ id: s
               <p style={{ color: "#3a3a37" }}>No evidence collected yet.</p>
             </div>
           )}
+
+          {/* Integrity Hash */}
+          <div className="card-glow card-spotlight p-4 mt-4 glass-strong">
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className="h-4 w-4" style={{ color: "#34d399" }} />
+              <h3 className="section-label">Integrity Hash</h3>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <div className="text-[10px] uppercase tracking-wider" style={{ color: "#3a3a37" }}>Timeline Chain</div>
+                <div className="text-[11px] font-mono break-all" style={{ color: "#8a8a86" }}>
+                  {integrity.timelineHash}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-wider" style={{ color: "#3a3a37" }}>Evidence Chain</div>
+                <div className="text-[11px] font-mono break-all" style={{ color: "#8a8a86" }}>
+                  {integrity.evidenceHash}
+                </div>
+              </div>
+              <div className="text-[10px]" style={{ color: "#3a3a37" }}>
+                Tamper-evident hash derived from timeline + evidence ordering.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

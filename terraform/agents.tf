@@ -30,7 +30,7 @@ locals {
       system_prompt = "prompts/responder.md"
       model         = "gemini-2.5-flash"
       provider      = "gemini"
-      tools         = ["block_ip", "isolate_pod", "revoke_token", "quarantine_user", "execute_playbook", "get_action_log", "update_incident", "add_evidence"]
+      tools         = ["block_ip", "isolate_pod", "isolate_host", "revoke_token", "quarantine_user", "execute_playbook", "get_action_log", "update_incident", "add_evidence"]
       budget_daily  = 0
     }
     chronicler = {
@@ -48,7 +48,7 @@ locals {
       system_prompt = "prompts/overseer.md"
       model         = "gemini-2.5-pro"
       provider      = "gemini"
-      tools         = ["create_incident", "update_incident", "get_incident", "list_incidents", "get_incident_stats", "check_ip", "block_ip", "execute_playbook"]
+      tools         = ["create_incident", "update_incident", "get_incident", "list_incidents", "get_incident_stats", "check_ip", "block_ip", "isolate_pod", "isolate_host", "execute_playbook"]
       budget_daily  = 0
     }
   }

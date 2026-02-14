@@ -29,7 +29,7 @@ export function CommandBar() {
   ).length;
 
   return (
-    <div className="command-bar">
+    <div className="command-bar glass-strong">
       <ThreatLevel p1Count={p1Count} />
 
       <div className="command-bar-divider" />
@@ -71,7 +71,7 @@ export function CommandBar() {
 
       <div className="command-bar-item">
         <div className={`led ${source === "db" ? "led-green" : "led-amber"}`} />
-        <span className="command-bar-value" style={{ color: source === "db" ? "#34d399" : "#fbbf24" }}>
+        <span className="badge-glass" style={{ color: source === "db" ? "#34d399" : "#fbbf24" }}>
           {source === "db" ? "LIVE" : "DEMO"}
         </span>
       </div>

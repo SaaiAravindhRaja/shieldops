@@ -25,7 +25,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-5 max-w-2xl">
       <div className="animate-in delay-1">
-        <h1 className="text-xl font-bold tracking-tight" style={{ color: "#fafaf9" }}>
+        <h1 className="text-xl font-bold tracking-tight text-gradient">
           Settings
         </h1>
         <p className="text-sm mt-0.5" style={{ color: "#5c5c58" }}>
@@ -34,7 +34,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Connection Status */}
-      <div className="card-glow p-5 animate-in delay-2">
+      <div className="card-glow glass-strong shadow-neo p-5 animate-in delay-2">
         <h2 className="section-label mb-4">Connection Status</h2>
         <div className="space-y-1">
           <StatusRow label="Archestra Platform" url="http://localhost:3000" status={archApi} />
@@ -46,7 +46,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Config */}
-      <div className="card-glow p-5 animate-in delay-3">
+      <div className="card-glow glass-strong shadow-neo p-5 animate-in delay-3">
         <h2 className="section-label mb-4">Archestra Connection</h2>
         <div className="space-y-4">
           <div>
@@ -75,7 +75,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Features */}
-      <div className="card-glow p-5 animate-in delay-4">
+      <div className="card-glow glass-strong shadow-neo p-5 animate-in delay-4">
         <div className="flex items-center gap-2 mb-4">
           <Shield className="w-4 h-4" style={{ color: "#34d399" }} />
           <h2 className="section-label">Archestra Features</h2>
@@ -93,7 +93,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Links */}
-      <div className="card-glow p-5 animate-in delay-5">
+      <div className="card-glow glass-strong shadow-neo p-5 animate-in delay-5">
         <h2 className="section-label mb-4">Quick Links</h2>
         <div className="grid grid-cols-2 gap-2">
           <QuickLink label="Archestra Admin" url="http://localhost:3000" />
@@ -160,7 +160,7 @@ function QuickLink({ label, url }: { label: string; url: string }) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center justify-between p-3 rounded-lg transition-colors group"
+      className="flex items-center justify-between p-3 rounded-lg transition-colors group hover-lift"
       style={{
         background: "#19191c",
         border: "1px solid #1a1a1e",

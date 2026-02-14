@@ -32,7 +32,7 @@ const defaultPieData = [
 
 function ChartCard({ title, children, delay }: { title: string; children: React.ReactNode; delay: number }) {
   return (
-    <div className={cn("card-glow p-5 animate-in", `delay-${delay}`)}>
+    <div className={cn("card-glow card-spotlight glass-strong shadow-neo p-5 animate-in", `delay-${delay}`)}>
       <h3 className="section-label mb-4">{title}</h3>
       {children}
     </div>
@@ -44,7 +44,7 @@ function MetricCard({ title, value, subtitle, icon: Icon, accent, delay }: {
 }) {
   return (
     <div
-      className={cn("card-glow p-4 animate-in", `delay-${delay}`)}
+      className={cn("card-glow card-spotlight hover-lift hover-glow p-4 animate-in", `delay-${delay}`)}
       style={{ borderLeft: `3px solid ${accent}` }}
     >
       <div className="flex items-center gap-2.5 mb-2">
@@ -97,7 +97,7 @@ export default function MetricsPage() {
   return (
     <div className="space-y-5">
       <div className="animate-in delay-1">
-        <h1 className="text-xl font-bold tracking-tight" style={{ color: "#fafaf9" }}>
+        <h1 className="text-xl font-bold tracking-tight text-gradient">
           Observability & Metrics
         </h1>
         <p className="text-sm mt-0.5" style={{ color: "#5c5c58" }}>
@@ -201,7 +201,7 @@ export default function MetricsPage() {
               </div>
             </div>
             <div
-              className="card-glow p-4 mt-4 flex items-center justify-between"
+              className="card-glow card-spotlight glass hover-lift p-4 mt-4 flex items-center justify-between"
               style={{ borderLeft: "3px solid #34d399" }}
             >
               <div>

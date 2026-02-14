@@ -51,6 +51,7 @@ locals {
       tools = [
         "block_ip",
         "isolate_pod",
+        "isolate_host",
         "revoke_token",
         "quarantine_user",
         "execute_playbook",

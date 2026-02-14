@@ -72,6 +72,17 @@ interface ProtocolEntry {
   source: string;
 }
 
+function formatToolResult(result: Record<string, unknown>) {
+  if (typeof result.message === "string") return result.message;
+  if (typeof result.action_type === "string") return `${result.action_type} executed`;
+  if (typeof result.action === "string") return `${result.action} executed`;
+  if (typeof result.incident_id === "string") {
+    const status = typeof result.status === "string" ? result.status : "created";
+    return `Incident ${result.incident_id} ${status}`;
+  }
+  return JSON.stringify(result);
+}
+
 export default function SimulatePage() {
   const [selected, setSelected] = useState(0);
   const [simState, setSimState] = useState<SimState>("idle");
@@ -105,10 +116,30 @@ export default function SimulatePage() {
   }, []);
 
   // Call real MCP tool via our API
+  const resolveToolParams = useCallback(
+    (params: Record<string, string | number | boolean | string[]>) => {
+      if (!liveIncidentId) return params;
+      const resolved: Record<string, string | number | boolean | string[]> = {};
+      for (const [key, value] of Object.entries(params)) {
+        if (value === "{{incident_id}}") {
+          resolved[key] = liveIncidentId;
+          continue;
+        }
+        if (Array.isArray(value)) {
+          resolved[key] = value.map((v) => (v === "{{incident_id}}" ? liveIncidentId : v));
+          continue;
+        }
+        resolved[key] = value;
+      }
+      return resolved;
+    },
+    [liveIncidentId]
+  );
+
   const callMcpTool = useCallback(async (
     server: string,
     tool: string,
-    params: Record<string, string>,
+    params: Record<string, string | number | boolean | string[]>,
   ): Promise<{ result: Record<string, unknown>; protocol: ProtocolEntry } | null> => {
     try {
       const res = await fetch("/api/simulate", {
@@ -149,7 +180,16 @@ export default function SimulatePage() {
     scenario.steps.forEach((step, i) => {
       totalDelay += step.delay / speed;
       const t = setTimeout(async () => {
-        setVisibleSteps((prev) => [...prev, step]);
+        const resolvedStep = step.toolCall
+          ? {
+              ...step,
+              toolCall: {
+                ...step.toolCall,
+                params: resolveToolParams(step.toolCall.params),
+              },
+            }
+          : step;
+        setVisibleSteps((prev) => [...prev, resolvedStep]);
         setActiveStage(step.stage);
         if (step.severity) setCurrentSeverity(step.severity);
 
@@ -158,13 +198,30 @@ export default function SimulatePage() {
           const mcpResult = await callMcpTool(
             step.toolCall.server,
             step.toolCall.name,
-            step.toolCall.params,
+            resolveToolParams(step.toolCall.params),
           );
 
           // Capture incident ID from create_incident
           if (mcpResult && step.toolCall.name === "create_incident") {
             const id = mcpResult.result.incident_id as string;
             setLiveIncidentId(id);
+          }
+
+          if (mcpResult) {
+            setVisibleSteps((prev) =>
+              prev.map((s) =>
+                s.id === step.id && s.toolCall
+                  ? {
+                      ...s,
+                      toolCall: {
+                        ...s.toolCall,
+                        result: formatToolResult(mcpResult.result),
+                        live: true,
+                      },
+                    }
+                  : s
+              )
+            );
           }
         }
 
@@ -174,7 +231,7 @@ export default function SimulatePage() {
       }, totalDelay);
       timeoutsRef.current.push(t);
     });
-  }, [selected, speed, reset, callMcpTool]);
+  }, [selected, speed, reset, callMcpTool, resolveToolParams]);
 
   // Elapsed timer
   useEffect(() => {
@@ -202,9 +259,10 @@ export default function SimulatePage() {
       {/* Header */}
       <div className="animate-in delay-1">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold tracking-tight" style={{ color: "#fafaf9" }}>
+          <h1 className="text-xl font-bold tracking-tight text-gradient">
             Attack Simulation
           </h1>
+          <span className="badge-glass">Demo Mode</span>
           {simState === "running" && (
             <span className="flex items-center gap-1.5">
               <span className="led led-red" />
@@ -223,8 +281,8 @@ export default function SimulatePage() {
           )}
           {toolCallsReal > 0 && (
             <span
-              className="text-[10px] font-mono px-2 py-0.5 rounded-full"
-              style={{ background: "rgba(52,211,153,0.15)", color: "#34d399" }}
+              className="badge-glass"
+              style={{ color: "#34d399", borderColor: "rgba(52,211,153,0.2)" }}
             >
               {toolCallsReal} real MCP calls
             </span>
@@ -243,7 +301,7 @@ export default function SimulatePage() {
             onClick={() => simState === "idle" && setSelected(i)}
             disabled={simState !== "idle"}
             className={cn(
-              "card-glow p-4 text-left transition-all",
+              "card-glow card-spotlight p-4 text-left transition-all hover-lift",
               simState !== "idle" && "opacity-50 cursor-not-allowed"
             )}
             style={{
@@ -286,8 +344,7 @@ export default function SimulatePage() {
         {simState === "idle" ? (
           <button
             onClick={startSim}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-bold text-sm transition-all hover:brightness-110"
-            style={{ background: "#34d399", color: "#050505" }}
+            className="btn btn-primary hover-lift"
           >
             <Play className="h-4 w-4" />
             Run Simulation
@@ -295,8 +352,7 @@ export default function SimulatePage() {
         ) : (
           <button
             onClick={reset}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm transition-all"
-            style={{ background: "#19191c", color: "#8a8a86", border: "1px solid #252529" }}
+            className="btn btn-ghost hover-lift"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             Reset
@@ -352,7 +408,7 @@ export default function SimulatePage() {
 
       {/* Pipeline Progress */}
       {simState !== "idle" && (
-        <div className="card-glow p-4">
+        <div className="card-glow card-spotlight p-4 glass-strong shadow-neo">
           <div className="flex items-center justify-between">
             {STAGES.map((stage, i) => {
               const agent = STAGE_AGENTS[stage];
@@ -421,7 +477,7 @@ export default function SimulatePage() {
           <div className="space-y-4">
             {/* Live Incident Badge */}
             {liveIncidentId && (
-              <div className="card-glow p-3" style={{ borderLeft: "3px solid #34d399" }}>
+              <div className="card-glow card-spotlight glass-strong shadow-neo p-3" style={{ borderLeft: "3px solid #34d399" }}>
                 <div className="flex items-center gap-2">
                   <span className="led led-green" />
                   <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "#3a3a37" }}>Live Incident</span>
@@ -436,7 +492,7 @@ export default function SimulatePage() {
             )}
 
             {/* Scenario Info */}
-            <div className="card-glow p-4" style={{ borderLeft: "3px solid #f87171" }}>
+            <div className="card-glow card-spotlight p-4 hover-lift" style={{ borderLeft: "3px solid #f87171" }}>
               <h3 className="section-label mb-2">Scenario</h3>
               <p className="text-sm font-bold mb-1" style={{ color: "#fafaf9" }}>{scenario.title}</p>
               <p className="text-[11px] mb-2" style={{ color: "#5c5c58" }}>{scenario.trigger}</p>
@@ -450,7 +506,7 @@ export default function SimulatePage() {
             </div>
 
             {/* Live Metrics */}
-            <div className="card-glow p-4">
+            <div className="card-glow card-spotlight p-4 hover-lift">
               <h3 className="section-label mb-3">Live Metrics</h3>
               <div className="grid grid-cols-2 gap-2">
                 <MetricBox icon={Clock} label="Elapsed" value={`${(elapsed / 1000).toFixed(1)}s`} color="#fafaf9" />
@@ -464,7 +520,7 @@ export default function SimulatePage() {
 
             {/* Evidence Collected */}
             {visibleSteps.some((s) => s.evidence) && (
-              <div className="card-glow p-4">
+              <div className="card-glow card-spotlight p-4 hover-lift">
                 <h3 className="section-label mb-3">Evidence Collected</h3>
                 <div className="space-y-1.5">
                   {visibleSteps
@@ -628,7 +684,7 @@ function ProtocolInspector({ protocolLog }: { protocolLog: ProtocolEntry[] }) {
       ) : (
         <div className="space-y-2 overflow-y-auto pr-1" style={{ maxHeight: "calc(100vh - 520px)", minHeight: 400 }}>
           {protocolLog.map((entry, i) => (
-            <div key={i} className="card-glow p-0 overflow-hidden" style={{ borderLeft: `3px solid ${SERVER_COLORS[entry.server] || "#5c5c58"}` }}>
+            <div key={i} className="card-glow card-spotlight hover-lift p-0 overflow-hidden" style={{ borderLeft: `3px solid ${SERVER_COLORS[entry.server] || "#5c5c58"}` }}>
               {/* Header */}
               <div className="flex items-center justify-between px-3 py-2" style={{ background: "#111113" }}>
                 <div className="flex items-center gap-2">
@@ -715,7 +771,7 @@ function RoiDashboard({
       <h2 className="section-label mb-3">Impact Analysis</h2>
 
       {/* Hero ROI Card */}
-      <div className="card-glow p-6" style={{ borderLeft: "3px solid #34d399", background: "rgba(52,211,153,0.03)" }}>
+      <div className="card-glow card-spotlight shadow-neo p-6" style={{ borderLeft: "3px solid #34d399", background: "rgba(52,211,153,0.03)" }}>
         <div className="flex items-center gap-2 mb-4">
           <ShieldBan className="h-5 w-5" style={{ color: "#34d399" }} />
           <span className="text-sm font-bold" style={{ color: "#34d399" }}>
@@ -844,7 +900,7 @@ function EventEntry({ step, index }: { step: SimStep; index: number }) {
   const ts = timestamp.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
   return (
-    <div className="card-glow p-4 animate-in" style={{ borderLeft: `3px solid ${agent.color}` }}>
+    <div className="card-glow card-spotlight hover-lift p-4 animate-in" style={{ borderLeft: `3px solid ${agent.color}` }}>
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-2">
           <div
@@ -896,9 +952,12 @@ function EventEntry({ step, index }: { step: SimStep; index: number }) {
             </span>
             <span
               className="text-[8px] font-mono px-1 py-0.5 rounded ml-auto"
-              style={{ background: "rgba(52,211,153,0.1)", color: "#34d399" }}
+              style={{
+                background: step.toolCall.live ? "rgba(52,211,153,0.2)" : "rgba(52,211,153,0.1)",
+                color: step.toolCall.live ? "#34d399" : "#8a8a86",
+              }}
             >
-              MCP
+              {step.toolCall.live ? "LIVE" : "MCP"}
             </span>
           </div>
           <div className="text-[10px] font-mono mb-1.5" style={{ color: "#3a3a37" }}>
@@ -906,7 +965,9 @@ function EventEntry({ step, index }: { step: SimStep; index: number }) {
               <span key={k} className="mr-3">
                 <span style={{ color: "#5c5c58" }}>{k}</span>
                 <span style={{ color: "#252529" }}>=</span>
-                <span style={{ color: "#8a8a86" }}>&quot;{v}&quot;</span>
+                <span style={{ color: "#8a8a86" }}>
+                  {typeof v === "string" ? `"${v}"` : JSON.stringify(v)}
+                </span>
               </span>
             ))}
           </div>
@@ -964,7 +1025,7 @@ function SummaryCard({
 
   return (
     <div
-      className="card-glow p-5 mt-2"
+      className="card-glow card-spotlight shadow-neo p-5 mt-2"
       style={{ borderLeft: "3px solid #34d399", background: "rgba(52,211,153,0.03)" }}
     >
       <div className="flex items-center gap-2 mb-3">
