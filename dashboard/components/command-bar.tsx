@@ -68,13 +68,6 @@ export function CommandBar() {
       </div>
 
       <div style={{ flex: 1 }} />
-
-      <div className="command-bar-item">
-        <div className={`led ${source === "db" ? "led-green" : "led-amber"}`} />
-        <span className="badge-glass" style={{ color: source === "db" ? "#34d399" : "#fbbf24" }}>
-          {source === "db" ? "LIVE" : "DEMO"}
-        </span>
-      </div>
     </div>
   );
 }

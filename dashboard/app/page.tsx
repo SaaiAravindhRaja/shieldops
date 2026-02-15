@@ -412,26 +412,11 @@ export default function DashboardPage() {
           <p className="text-sm mt-1" style={{ color: "#5c5c58" }}>
             Multi-agent AI SOC powered by Archestra MCP Platform
           </p>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="badge-glass">Demo Day</span>
-            <span className="badge-glass" style={{ color: "#34d399", borderColor: "rgba(52,211,153,0.2)" }}>
-              MCP Live
-            </span>
-          </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className={`led ${incSrc === "db" ? "led-green" : "led-amber"}`} />
-            <span
-              className="text-xs font-mono font-semibold"
-              style={{ color: incSrc === "db" ? "#34d399" : "#fbbf24" }}
-            >
-              {incSrc === "db" ? "LIVE" : "DEMO"}
-            </span>
-          </div>
           <Link href="/simulate" className="btn btn-primary hover-lift">
             <Play className="h-4 w-4" />
-            Run Demo
+            Run Simulation
           </Link>
         </div>
       </div>
